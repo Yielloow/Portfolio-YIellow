@@ -146,7 +146,8 @@ let translations = {};
 
 async function loadTranslations(l) {
   try {
-    const r = await fetch(`locales/${l}.json`);
+    const base = document.querySelector('base')?.href || location.href.replace(/[^/]*$/, '');
+    const r = await fetch(`${base}locales/${l}.json`);
     translations = await r.json();
   } catch {
     translations = {};
