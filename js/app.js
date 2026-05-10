@@ -6,9 +6,9 @@
    Replace with your real values after creating
    a Supabase project at supabase.com
 ───────────────────────────────────────── */
-const SUPABASE_URL = 'YOUR_SUPABASE_URL';
-const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY';
-const sb = (SUPABASE_URL !== 'YOUR_SUPABASE_URL' && window.supabase)
+const SUPABASE_URL = 'https://fzoxpcpfoazihmxzthnm.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_lGurPEsMa7O5UeEuonrLhg_ckpsZA3N';
+const sb = (SUPABASE_URL !== 'https://fzoxpcpfoazihmxzthnm.supabase.co' && window.supabase)
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
   : null;
 
