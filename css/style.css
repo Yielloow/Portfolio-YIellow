@@ -260,11 +260,18 @@ h2 {
 }
 
 #three-canvas {
-  position: absolute;
+  position: fixed;
   inset: 0;
   width: 100%;
   height: 100%;
   z-index: 0;
+  pointer-events: none;
+  opacity: 0.38;
+}
+
+section, footer {
+  position: relative;
+  z-index: 1;
 }
 
 .hero-content {

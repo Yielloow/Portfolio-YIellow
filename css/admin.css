@@ -412,6 +412,51 @@ input, textarea, select { font-family: inherit; }
   border-radius: 4px;
 }
 
+/* ── Char counter ── */
+.char-counter {
+  font-family: var(--font-m);
+  font-size: 0.75rem;
+  margin-top: 6px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  transition: color 0.3s;
+}
+.char-counter.low  { color: #ef4444; }
+.char-counter.warn { color: #f59e0b; }
+.char-counter.ok   { color: #22c55e; }
+.char-num { font-weight: 700; font-size: 0.88rem; }
+
+/* ── Proof upload section ── */
+.proof-upload-section {
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 16px;
+  background: rgba(0,212,255,0.03);
+}
+.proof-section-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 12px;
+  letter-spacing: 0.04em;
+}
+.proof-upload-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.proof-preview img {
+  max-width: 240px;
+  max-height: 160px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  object-fit: cover;
+}
+
 /* ── Save Status ── */
 .save-status {
   font-size: 0.82rem;

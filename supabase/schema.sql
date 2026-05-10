@@ -108,3 +108,17 @@ CREATE POLICY "auth_upload_cv" ON storage.objects
 
 CREATE POLICY "auth_update_cv" ON storage.objects
   FOR UPDATE USING (bucket_id = 'cv' AND auth.role() = 'authenticated');
+
+-- ── Bucket preuves d'activités ───────────
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('proof-images', 'proof-images', true)
+ON CONFLICT DO NOTHING;
+
+CREATE POLICY "public_read_proof" ON storage.objects
+  FOR SELECT USING (bucket_id = 'proof-images');
+
+CREATE POLICY "auth_upload_proof" ON storage.objects
+  FOR INSERT WITH CHECK (bucket_id = 'proof-images' AND auth.role() = 'authenticated');
+
+CREATE POLICY "auth_update_proof" ON storage.objects
+  FOR UPDATE USING (bucket_id = 'proof-images' AND auth.role() = 'authenticated');

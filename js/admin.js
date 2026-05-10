@@ -300,16 +300,23 @@ async function saveProfile() {
 ══════════════════════════════════════════ */
 const FORM_FIELDS = {
   activity: [
-    { key: 'theme_id',      label: 'Thème (ID)',                type: 'theme-select' },
-    { key: 'title_fr',      label: 'Titre (FR)',                type: 'text',     required: true },
-    { key: 'title_en',      label: 'Title (EN)',                type: 'text' },
-    { key: 'type',          label: 'Type',                      type: 'type-select' },
-    { key: 'hours',         label: 'Heures',                    type: 'number' },
-    { key: 'date',          label: 'Date',                      type: 'date' },
-    { key: 'reflection_fr', label: 'Analyse réflexive (FR)',    type: 'textarea', rows: 8, required: true },
-    { key: 'reflection_en', label: 'Reflective analysis (EN)',  type: 'textarea', rows: 8 },
-    { key: 'proof_url',     label: 'URL preuve (lien/photo)',   type: 'url' },
-    { key: 'order_index',   label: 'Ordre',                     type: 'number' },
+    { key: '_row1',         type: 'row-start' },
+    { key: 'title_fr',      label: 'Titre (FR)',           type: 'text',         required: true },
+    { key: 'title_en',      label: 'Title (EN)',           type: 'text' },
+    { key: '_row1end',      type: 'row-end' },
+    { key: '_row2',         type: 'row-start' },
+    { key: 'theme_id',      label: 'Thème',                type: 'theme-select', required: true },
+    { key: 'type',          label: 'Type d\'activité',     type: 'type-select' },
+    { key: '_row2end',      type: 'row-end' },
+    { key: '_row3',         type: 'row-start' },
+    { key: 'hours',         label: 'Heures',               type: 'number' },
+    { key: 'date',          label: 'Date',                 type: 'date' },
+    { key: '_row3end',      type: 'row-end' },
+    { key: 'reflection_fr', label: 'Analyse réflexive (FR) — min. 1 page (~2000 caractères)', type: 'reflection', rows: 14, required: true },
+    { key: 'reflection_en', label: 'Reflective analysis (EN)',                                type: 'reflection', rows: 14 },
+    { key: '_proof',        type: 'proof-section' },
+    { key: 'proof_url',     label: 'Lien vers la preuve (URL, Google Drive…)',  type: 'url' },
+    { key: 'order_index',   label: 'Ordre d\'affichage',   type: 'number' },
   ],
   theme: [
     { key: 'title_fr',    label: 'Titre (FR)',  type: 'text', required: true },
@@ -366,24 +373,125 @@ async function openForm(type, data = null) {
     return buildField(f, val, themes);
   }).join('');
 
+  setupCharCounters();
+  setupProofUpload(data?.id);
   overlay.classList.add('open');
 }
 
 function buildField(f, val, themes) {
   const req = f.required ? 'required' : '';
+
+  if (f.type === 'row-start')  return '<div class="form-row-2">';
+  if (f.type === 'row-end')    return '</div>';
+  if (f.type === 'proof-section') return `
+    <div class="proof-upload-section">
+      <div class="proof-section-label">📎 Preuve de participation</div>
+      <div class="proof-upload-inner">
+        <input type="file" id="proof-file-input" accept="image/*,.pdf" class="file-input">
+        <label for="proof-file-input" class="btn-ghost file-label">Choisir un fichier (image ou PDF)</label>
+        <span class="file-name" id="proof-file-name">Aucun fichier</span>
+        <button type="button" class="btn-primary btn-sm" id="proof-upload-btn">Téléverser</button>
+        <span class="save-status" id="proof-upload-status"></span>
+      </div>
+      <div id="proof-preview" class="proof-preview"></div>
+    </div>`;
+
   if (f.type === 'theme-select') {
     const opts = themes.map(t => `<option value="${t.id}" ${val == t.id ? 'selected' : ''}>${t.title_fr}</option>`).join('');
     return `<div class="form-group"><label>${f.label}</label><select name="${f.key}" ${req}><option value="">— Choisir —</option>${opts}</select></div>`;
   }
   if (f.type === 'type-select') {
-    const types = ['formation','hackathon','conference','visite','jobday','projet','salon'];
-    const opts = types.map(t => `<option value="${t}" ${val === t ? 'selected' : ''}>${t}</option>`).join('');
-    return `<div class="form-group"><label>${f.label}</label><select name="${f.key}"><option value="">—</option>${opts}</select></div>`;
+    const types = [
+      { v:'formation',  l:'📚 Formation' },
+      { v:'hackathon',  l:'🏆 Hackathon' },
+      { v:'conference', l:'🎤 Conférence' },
+      { v:'visite',     l:'🏢 Visite d\'entreprise' },
+      { v:'jobday',     l:'💼 Job Day' },
+      { v:'projet',     l:'🔨 Projet' },
+      { v:'salon',      l:'🎪 Salon IT' },
+    ];
+    const opts = types.map(t => `<option value="${t.v}" ${val === t.v ? 'selected' : ''}>${t.l}</option>`).join('');
+    return `<div class="form-group"><label>${f.label}</label><select name="${f.key}"><option value="">— Type —</option>${opts}</select></div>`;
+  }
+  if (f.type === 'reflection') {
+    const count = String(val || '').length;
+    const cls   = count >= 2000 ? 'ok' : count >= 1000 ? 'warn' : 'low';
+    return `
+      <div class="form-group">
+        <label>${f.label}</label>
+        <textarea name="${f.key}" rows="${f.rows || 8}" ${req} class="reflection-ta" data-counter="${f.key}-counter">${escHtml(val)}</textarea>
+        <div class="char-counter ${cls}" id="${f.key}-counter">
+          <span class="char-num">${count}</span> caractères
+          <span class="char-target">${count >= 2000 ? '✓ suffisant' : `· objectif : 2000+`}</span>
+        </div>
+      </div>`;
   }
   if (f.type === 'textarea') {
     return `<div class="form-group"><label>${f.label}</label><textarea name="${f.key}" rows="${f.rows || 4}" ${req}>${escHtml(val)}</textarea></div>`;
   }
   return `<div class="form-group"><label>${f.label}</label><input type="${f.type}" name="${f.key}" value="${escHtml(String(val))}" ${req}></div>`;
+}
+
+function setupCharCounters() {
+  document.querySelectorAll('.reflection-ta').forEach(ta => {
+    const counterId = ta.dataset.counter;
+    ta.addEventListener('input', () => {
+      const count  = ta.value.length;
+      const el     = document.getElementById(counterId);
+      if (!el) return;
+      el.querySelector('.char-num').textContent = count;
+      el.querySelector('.char-target').textContent = count >= 2000 ? '✓ suffisant' : `· objectif : 2000+`;
+      el.className = `char-counter ${count >= 2000 ? 'ok' : count >= 1000 ? 'warn' : 'low'}`;
+    });
+  });
+}
+
+function setupProofUpload(activityId) {
+  const fileInput  = document.getElementById('proof-file-input');
+  const fileNameEl = document.getElementById('proof-file-name');
+  const uploadBtn  = document.getElementById('proof-upload-btn');
+  const statusEl   = document.getElementById('proof-upload-status');
+  const previewEl  = document.getElementById('proof-preview');
+  const urlInput   = document.querySelector('input[name="proof_url"]');
+
+  if (!fileInput) return;
+
+  fileInput.addEventListener('change', () => {
+    const f = fileInput.files[0];
+    fileNameEl.textContent = f?.name || 'Aucun fichier';
+    if (f && f.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = e => { previewEl.innerHTML = `<img src="${e.target.result}" alt="preview">`; };
+      reader.readAsDataURL(f);
+    } else {
+      previewEl.innerHTML = '';
+    }
+  });
+
+  uploadBtn?.addEventListener('click', async () => {
+    const file = fileInput.files[0];
+    if (!file) { statusEl.textContent = 'Aucun fichier.'; return; }
+    if (!sb)   { statusEl.textContent = 'Supabase non configuré.'; return; }
+
+    uploadBtn.disabled = true;
+    statusEl.textContent = 'Téléversement…';
+    statusEl.className = 'save-status';
+
+    const ext  = file.name.split('.').pop();
+    const name = `proof_${activityId || Date.now()}.${ext}`;
+    const { data, error } = await sb.storage.from('proof-images').upload(name, file, { upsert: true });
+
+    uploadBtn.disabled = false;
+    if (error) {
+      statusEl.textContent = 'Erreur : ' + error.message;
+      statusEl.className = 'save-status error';
+      return;
+    }
+    const { data: { publicUrl } } = sb.storage.from('proof-images').getPublicUrl(name);
+    if (urlInput) urlInput.value = publicUrl;
+    statusEl.textContent = '✓ Fichier téléversé, URL copiée dans le champ ci-dessus';
+    setTimeout(() => { statusEl.textContent = ''; }, 4000);
+  });
 }
 
 async function handleFormSubmit(e) {

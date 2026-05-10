@@ -175,11 +175,8 @@
     targetY = (e.clientY / window.innerHeight - 0.5) * 1.0;
   });
 
-  /* ── Scroll ── */
-  let scrollRatio = 0;
-  window.addEventListener('scroll', () => {
-    scrollRatio = window.scrollY / (document.body.scrollHeight - window.innerHeight);
-  });
+  /* ── Scroll (unused — canvas is fixed) ── */
+  const scrollRatio = 0;
 
   /* ── Animate ── */
   const clock = new THREE.Clock();
@@ -214,7 +211,6 @@
     currentY += (targetY - currentY) * 0.04;
     camera.position.x = currentX * 0.6;
     camera.position.y = -currentY * 0.4;
-    camera.position.z = 7 + scrollRatio * 3;
     camera.lookAt(0, 0, 0);
 
     renderer.render(scene, camera);
