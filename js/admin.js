@@ -188,23 +188,38 @@ async function loadThemes() {
   const list = document.getElementById('themes-list');
   list.innerHTML = '<p style="color:var(--muted);font-size:.88rem">Chargement…</p>';
 
-  const { data: themes } = await sb.from('themes').select('*').order('order_index');
+  const [{ data: themes }, { data: activities }] = await Promise.all([
+    sb.from('themes').select('*').order('order_index'),
+    sb.from('activities').select('theme_id, hours'),
+  ]);
+
   if (!themes?.length) {
     list.innerHTML = '<p style="color:var(--muted);font-size:.88rem">Aucun thème.</p>';
     return;
   }
-  list.innerHTML = themes.map(th => `
+
+  // calculate hours per theme from activities
+  const hoursMap = {};
+  (activities || []).forEach(a => {
+    hoursMap[a.theme_id] = (hoursMap[a.theme_id] || 0) + (a.hours || 0);
+  });
+
+  list.innerHTML = themes.map(th => {
+    const total = hoursMap[th.id] || 0;
+    const overLimit = total > 10;
+    return `
     <div class="item-row">
       <div class="item-icon">${th.icon || '🏷️'}</div>
       <div class="item-info">
         <div class="item-title">${escHtml(th.title_fr)}</div>
-        <div class="item-meta">${th.hours || 0}h &nbsp;·&nbsp; slug: ${th.slug || '—'}</div>
+        <div class="item-meta">slug: ${th.slug || '—'}</div>
       </div>
+      <span class="badge ${overLimit ? 'badge-warn' : ''}">${total}h / 10h max</span>
       <div class="item-actions">
         <button class="btn-ghost btn-sm" onclick="editItem('theme','${th.id}')">Éditer</button>
       </div>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 }
 
 /* ── Skills ── */
@@ -319,12 +334,15 @@ const FORM_FIELDS = {
     { key: 'order_index',   label: 'Ordre d\'affichage',   type: 'number' },
   ],
   theme: [
+    { key: '_row1',       type: 'row-start' },
     { key: 'title_fr',    label: 'Titre (FR)',  type: 'text', required: true },
     { key: 'title_en',    label: 'Title (EN)',  type: 'text' },
-    { key: 'slug',        label: 'Slug (identifiant unique, ex: web)', type: 'text', required: true },
+    { key: '_row1end',    type: 'row-end' },
+    { key: '_row2',       type: 'row-start' },
+    { key: 'slug',        label: 'Slug (ex: web, robotique…)', type: 'text', required: true },
     { key: 'icon',        label: 'Emoji icône', type: 'text' },
-    { key: 'hours',       label: 'Heures totales (max 10)', type: 'number' },
-    { key: 'order_index', label: 'Ordre',       type: 'number' },
+    { key: '_row2end',    type: 'row-end' },
+    { key: 'order_index', label: 'Ordre d\'affichage', type: 'number' },
   ],
   skill: [
     { key: 'name',        label: 'Nom',      type: 'text',   required: true },

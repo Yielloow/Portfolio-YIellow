@@ -353,6 +353,11 @@ input, textarea, select { font-family: inherit; }
 .item-actions { display: flex; gap: 8px; flex-shrink: 0; }
 
 /* ── Type Badge ── */
+.badge.badge-warn {
+  background: rgba(239,68,68,0.12);
+  border-color: rgba(239,68,68,0.35);
+  color: #f87171;
+}
 .badge {
   font-family: var(--font-m);
   font-size: 0.7rem;
