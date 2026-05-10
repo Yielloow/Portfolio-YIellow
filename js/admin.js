@@ -6,7 +6,7 @@
 const SUPABASE_URL = 'https://fzoxpcpfoazihmxzthnm.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_lGurPEsMa7O5UeEuonrLhg_ckpsZA3N';
 
-const sb = (SUPABASE_URL !== 'YOUR_SUPABASE_URL' && window.supabase)
+const sb = window.supabase
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
   : null;
 
