@@ -191,34 +191,37 @@
 
     /* Foreground particles — hero only */
     fgMat.opacity = Math.max(0, 0.5 - fade * 0.5);
+    fgParticles.visible = fade < 0.99;
     fgParticles.rotation.y = t * 0.04;
     fgParticles.rotation.x = t * 0.02;
 
-    /* Moon — fade out on scroll */
-    const moonVis = 1 - fade;
-    moon.children.forEach((c, i) => {
-      c.material.opacity = moonBaseOpacity[i] * moonVis;
-    });
-    moonLight.intensity = (3 + Math.sin(t * 0.4) * 0.5) * moonVis;
+    /* Moon — fade + hide */
+    const heroAlpha  = 1 - fade;
+    const heroVisible = fade < 0.98;
+    moon.visible = heroVisible;
+    if (heroVisible) {
+      moon.children.forEach((c, i) => { c.material.opacity = moonBaseOpacity[i] * heroAlpha; });
+    }
+    moonLight.intensity = (3 + Math.sin(t * 0.4) * 0.5) * heroAlpha;
     const pulse = 1 + Math.sin(t * 0.7) * 0.018;
     moon.scale.setScalar(pulse);
 
-    /* Tech sphere — fade out on scroll */
-    const techVis = 1 - fade;
-    techSphere.children.forEach((c, i) => {
-      c.material.opacity = techBaseOpacity[i] * techVis;
-    });
+    /* Tech sphere + ring + fragments — fade + hide */
+    techSphere.visible = heroVisible;
+    if (heroVisible) {
+      techSphere.children.forEach((c, i) => { c.material.opacity = techBaseOpacity[i] * heroAlpha; });
+    }
     techSphere.rotation.y = t * 0.45;
     techSphere.rotation.x = t * 0.28;
 
-    /* Ring */
-    ring.material.opacity = ringBaseOpacity * techVis;
+    ring.visible = heroVisible;
+    if (heroVisible) ring.material.opacity = ringBaseOpacity * heroAlpha;
     ring.rotation.z = t * 0.3;
     ring.rotation.y = t * 0.15;
 
-    /* Fragments — fade out on scroll */
     fragments.forEach(f => {
-      f.material.opacity = f.userData.baseOp * techVis;
+      f.visible = heroVisible;
+      if (heroVisible) f.material.opacity = f.userData.baseOp * heroAlpha;
       f.position.x += f.userData.speed.x;
       f.position.y += f.userData.speed.y;
       f.rotation.z  += f.userData.speed.rot;
