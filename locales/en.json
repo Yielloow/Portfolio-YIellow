@@ -1,0 +1,54 @@
+{
+  "nav.about":      "About",
+  "nav.project":    "Project",
+  "nav.skills":     "Skills",
+  "nav.activities": "Activities",
+  "nav.timeline":   "Timeline",
+  "nav.cv":         "Resume",
+
+  "hero.badge":   "Student · Developer · Robotics",
+  "hero.explore": "Explore",
+  "hero.cv":      "View Resume",
+  "hero.scroll":  "scroll",
+  "hero.typed":   ["Full-Stack Developer", "Robotics Enthusiast", "EPHEC Student", "Curious & Creative", "Embedded Systems"],
+
+  "about.tag":   "// about",
+  "about.title": "Who am I?",
+  "about.text":  "Computer Science student at EPHEC, passionate about software development and robotics. I love building systems that have a real impact — from clean code to embedded electronics.",
+  "about.stat1": "Themes",
+  "about.stat2": "Hours",
+  "about.stat3": "Activities",
+
+  "project.tag":       "// professional project",
+  "project.title":     "My Professional Project",
+  "project.text":      "I aim to become a developer specialised in embedded systems and robotics, at the intersection of software and hardware. My goal is to join an R&D team working on high-impact technological projects.",
+  "project.strengths": "💪 Strengths",
+  "project.weaknesses":"🎯 Areas for Improvement",
+  "project.s1": "Intellectual curiosity",
+  "project.s2": "Analytical mindset",
+  "project.s3": "Technical adaptability",
+  "project.s4": "Rigour & Autonomy",
+  "project.w1": "Public speaking",
+  "project.w2": "Stress management",
+
+  "skills.tag":   "// tech stack",
+  "skills.title": "Skills",
+
+  "activities.tag":   "// skills acquisition",
+  "activities.title": "Activities & Themes",
+  "activities.all":   "All",
+  "activities.readmore": "Read analysis →",
+
+  "timeline.tag":   "// timeline",
+  "timeline.title": "My Journey",
+
+  "cv.title": "Download my Resume",
+  "cv.desc":  "Find my full background, experiences, and skills.",
+  "cv.fr":    "CV Français",
+  "cv.en":    "CV English",
+
+  "footer.made": "Built with Three.js, GSAP & passion",
+
+  "modal.hours": "hours",
+  "modal.proof": "Proof of participation:"
+}

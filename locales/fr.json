@@ -1,0 +1,54 @@
+{
+  "nav.about":      "À propos",
+  "nav.project":    "Projet",
+  "nav.skills":     "Compétences",
+  "nav.activities": "Activités",
+  "nav.timeline":   "Parcours",
+  "nav.cv":         "CV",
+
+  "hero.badge":   "Étudiant · Développeur · Robotique",
+  "hero.explore": "Explorer",
+  "hero.cv":      "Voir le CV",
+  "hero.scroll":  "scroll",
+  "hero.typed":   ["Développeur Full-Stack", "Passionné de Robotique", "Étudiant EPHEC", "Curieux & Créatif", "Systèmes Embarqués"],
+
+  "about.tag":   "// à propos",
+  "about.title": "Qui suis-je ?",
+  "about.text":  "Étudiant en Technologies de l'Informatique à l'EPHEC, je suis passionné par le développement logiciel et la robotique. J'aime construire des systèmes qui ont un impact réel — du code propre à l'électronique embarquée.",
+  "about.stat1": "Thèmes",
+  "about.stat2": "Heures",
+  "about.stat3": "Activités",
+
+  "project.tag":       "// projet professionnel",
+  "project.title":     "Mon Projet Professionnel",
+  "project.text":      "Je vise à devenir développeur spécialisé en systèmes embarqués et robotique, à l'intersection du software et du hardware. Mon objectif est d'intégrer une équipe R&D travaillant sur des projets à fort impact technologique.",
+  "project.strengths": "💪 Points Forts",
+  "project.weaknesses":"🎯 Axes d'Amélioration",
+  "project.s1": "Curiosité intellectuelle",
+  "project.s2": "Esprit analytique",
+  "project.s3": "Adaptabilité technique",
+  "project.s4": "Rigueur & Autonomie",
+  "project.w1": "Prise de parole en public",
+  "project.w2": "Gestion du stress",
+
+  "skills.tag":   "// stack technique",
+  "skills.title": "Compétences",
+
+  "activities.tag":   "// acquisition de compétences",
+  "activities.title": "Activités & Thèmes",
+  "activities.all":   "Tout",
+  "activities.readmore": "Lire l'analyse →",
+
+  "timeline.tag":   "// parcours",
+  "timeline.title": "Mon Parcours",
+
+  "cv.title": "Télécharger mon CV",
+  "cv.desc":  "Retrouvez mon parcours complet, mes expériences et mes compétences.",
+  "cv.fr":    "CV Français",
+  "cv.en":    "CV English",
+
+  "footer.made": "Fait avec Three.js, GSAP & passion",
+
+  "modal.hours": "heures",
+  "modal.proof": "Preuve de participation :"
+}

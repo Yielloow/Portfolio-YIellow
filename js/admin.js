@@ -1,0 +1,482 @@
+/* ══════════════════════════════════════════
+   ADMIN.JS — Auth · CRUD · UI
+══════════════════════════════════════════ */
+
+/* ── Config ─ replace with your Supabase values ── */
+const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+const SUPABASE_KEY = 'YOUR_SUPABASE_ANON_KEY';
+
+const sb = (SUPABASE_URL !== 'YOUR_SUPABASE_URL' && window.supabase)
+  ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
+  : null;
+
+/* ══════════════════════════════════════════
+   STATE
+══════════════════════════════════════════ */
+let activeTab    = 'activities';
+let editingItem  = null; // { table, id } when editing
+let formContext  = null; // 'activity' | 'theme' | 'skill' | 'timeline'
+
+/* ══════════════════════════════════════════
+   INIT
+══════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', async () => {
+  if (!sb) {
+    showNoSupabase();
+    return;
+  }
+
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) showDashboard();
+  else         showLogin();
+
+  bindGlobalEvents();
+});
+
+function showNoSupabase() {
+  const ls = document.getElementById('login-screen');
+  ls.innerHTML = `
+    <div class="login-card" style="text-align:center">
+      <div class="login-logo">&lt;FMC/&gt;</div>
+      <h1 class="login-title" style="font-size:1.3rem">Supabase non configuré</h1>
+      <p class="login-sub" style="margin-bottom:24px">
+        Ouvrez <code style="color:#00d4ff;background:rgba(0,212,255,0.1);padding:2px 6px;border-radius:4px">js/admin.js</code>
+        et remplacez <code style="color:#00d4ff;background:rgba(0,212,255,0.1);padding:2px 6px;border-radius:4px">YOUR_SUPABASE_URL</code>
+        et <code style="color:#00d4ff;background:rgba(0,212,255,0.1);padding:2px 6px;border-radius:4px">YOUR_SUPABASE_ANON_KEY</code>
+        par vos vraies valeurs Supabase.
+      </p>
+      <p style="font-size:0.82rem;color:#64748b;margin-bottom:28px">
+        Créez votre projet sur <strong style="color:#00d4ff">supabase.com</strong> puis exécutez le fichier
+        <code style="color:#00d4ff;background:rgba(0,212,255,0.1);padding:2px 6px;border-radius:4px">supabase/schema.sql</code>
+        dans l'éditeur SQL de Supabase.
+      </p>
+      <a href="index.html" class="back-link">← Retour au portfolio</a>
+    </div>
+  `;
+}
+
+/* ══════════════════════════════════════════
+   AUTH
+══════════════════════════════════════════ */
+function showLogin() {
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('dashboard').style.display    = 'none';
+}
+
+async function showDashboard() {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('dashboard').style.display    = 'flex';
+  switchTab('activities');
+}
+
+document.getElementById('login-form')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('login-btn');
+  const errEl = document.getElementById('login-error');
+  btn.textContent = 'Connexion…';
+  btn.disabled = true;
+  errEl.textContent = '';
+
+  const { error } = await sb.auth.signInWithPassword({
+    email:    document.getElementById('email').value,
+    password: document.getElementById('password').value,
+  });
+
+  if (error) {
+    errEl.textContent = 'Identifiants incorrects. Vérifiez votre email et mot de passe.';
+    btn.textContent = 'Se connecter';
+    btn.disabled = false;
+  } else {
+    showDashboard();
+  }
+});
+
+document.getElementById('logout-btn')?.addEventListener('click', async () => {
+  await sb.auth.signOut();
+  showLogin();
+});
+
+/* ══════════════════════════════════════════
+   TAB NAVIGATION
+══════════════════════════════════════════ */
+const TAB_TITLES = {
+  activities: 'Activités',
+  themes:     'Thèmes',
+  skills:     'Compétences',
+  timeline:   'Parcours',
+  profile:    'Profil & Projet',
+  cv:         'CV',
+};
+
+function switchTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.sn-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`tab-${tab}`)?.classList.add('active');
+  document.querySelector(`.sn-btn[data-tab="${tab}"]`)?.classList.add('active');
+  document.getElementById('tab-title').textContent = TAB_TITLES[tab] || tab;
+  loadTab(tab);
+}
+
+function bindGlobalEvents() {
+  document.querySelectorAll('.sn-btn').forEach(btn => {
+    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+  });
+
+  document.getElementById('new-activity-btn')?.addEventListener('click', () => openForm('activity'));
+  document.getElementById('new-theme-btn')?.addEventListener('click',    () => openForm('theme'));
+  document.getElementById('new-skill-btn')?.addEventListener('click',    () => openForm('skill'));
+  document.getElementById('new-tl-btn')?.addEventListener('click',       () => openForm('timeline'));
+
+  document.getElementById('save-profile-btn')?.addEventListener('click', saveProfile);
+
+  setupCvUpload('fr');
+  setupCvUpload('en');
+
+  document.getElementById('form-close')?.addEventListener('click', closeForm);
+  document.getElementById('form-overlay')?.addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeForm();
+  });
+  document.getElementById('item-form')?.addEventListener('submit', handleFormSubmit);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeForm(); });
+}
+
+/* ══════════════════════════════════════════
+   LOAD TAB DATA
+══════════════════════════════════════════ */
+async function loadTab(tab) {
+  if (tab === 'activities') await loadActivities();
+  if (tab === 'themes')     await loadThemes();
+  if (tab === 'skills')     await loadSkills();
+  if (tab === 'timeline')   await loadTimeline();
+  if (tab === 'profile')    await loadProfile();
+}
+
+/* ── Activities ── */
+async function loadActivities() {
+  const list = document.getElementById('activities-list');
+  list.innerHTML = '<p style="color:var(--muted);font-size:.88rem">Chargement…</p>';
+
+  const [{ data: activities }, { data: themes }] = await Promise.all([
+    sb.from('activities').select('*').order('order_index'),
+    sb.from('themes').select('id, title_fr, slug').order('order_index'),
+  ]);
+
+  if (!activities?.length) {
+    list.innerHTML = '<p style="color:var(--muted);font-size:.88rem">Aucune activité. Créez-en une !</p>';
+    return;
+  }
+
+  const themeMap = Object.fromEntries((themes || []).map(t => [t.id, t.title_fr]));
+  list.innerHTML = activities.map(a => `
+    <div class="item-row">
+      <div class="item-icon">📋</div>
+      <div class="item-info">
+        <div class="item-title">${escHtml(a.title_fr)}</div>
+        <div class="item-meta">${themeMap[a.theme_id] || '—'} &nbsp;·&nbsp; ${typeLabel(a.type)} &nbsp;·&nbsp; ${a.hours || 0}h</div>
+      </div>
+      <span class="badge">${a.type || '—'}</span>
+      <div class="item-actions">
+        <button class="btn-ghost btn-sm" onclick="editItem('activity','${a.id}')">Éditer</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+/* ── Themes ── */
+async function loadThemes() {
+  const list = document.getElementById('themes-list');
+  list.innerHTML = '<p style="color:var(--muted);font-size:.88rem">Chargement…</p>';
+
+  const { data: themes } = await sb.from('themes').select('*').order('order_index');
+  if (!themes?.length) {
+    list.innerHTML = '<p style="color:var(--muted);font-size:.88rem">Aucun thème.</p>';
+    return;
+  }
+  list.innerHTML = themes.map(th => `
+    <div class="item-row">
+      <div class="item-icon">${th.icon || '🏷️'}</div>
+      <div class="item-info">
+        <div class="item-title">${escHtml(th.title_fr)}</div>
+        <div class="item-meta">${th.hours || 0}h &nbsp;·&nbsp; slug: ${th.slug || '—'}</div>
+      </div>
+      <div class="item-actions">
+        <button class="btn-ghost btn-sm" onclick="editItem('theme','${th.id}')">Éditer</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+/* ── Skills ── */
+async function loadSkills() {
+  const list = document.getElementById('skills-list');
+  list.innerHTML = '<p style="color:var(--muted);font-size:.88rem">Chargement…</p>';
+
+  const { data: skills } = await sb.from('skills').select('*').order('order_index');
+  if (!skills?.length) {
+    list.innerHTML = '<p style="color:var(--muted);font-size:.88rem">Aucune compétence.</p>';
+    return;
+  }
+  list.innerHTML = skills.map(s => `
+    <div class="item-row">
+      <div class="item-icon">💡</div>
+      <div class="item-info">
+        <div class="item-title">${escHtml(s.name)}</div>
+        <div class="item-meta">${s.category || '—'} &nbsp;·&nbsp; ${s.level || 0}%</div>
+      </div>
+      <div class="item-actions">
+        <button class="btn-ghost btn-sm" onclick="editItem('skill','${s.id}')">Éditer</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+/* ── Timeline ── */
+async function loadTimeline() {
+  const list = document.getElementById('timeline-list');
+  list.innerHTML = '<p style="color:var(--muted);font-size:.88rem">Chargement…</p>';
+
+  const { data: items } = await sb.from('timeline_items').select('*').order('year');
+  if (!items?.length) {
+    list.innerHTML = '<p style="color:var(--muted);font-size:.88rem">Aucune étape.</p>';
+    return;
+  }
+  list.innerHTML = items.map(i => `
+    <div class="item-row">
+      <div class="item-icon">📅</div>
+      <div class="item-info">
+        <div class="item-title">${i.year} — ${escHtml(i.title_fr)}</div>
+        <div class="item-meta">${escHtml(i.desc_fr || '').slice(0, 80)}…</div>
+      </div>
+      <div class="item-actions">
+        <button class="btn-ghost btn-sm" onclick="editItem('timeline','${i.id}')">Éditer</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+/* ── Profile ── */
+async function loadProfile() {
+  const { data } = await sb.from('profile').select('*').single();
+  if (!data) return;
+  setValue('bio-fr',     data.bio_fr);
+  setValue('bio-en',     data.bio_en);
+  setValue('projet-fr',  data.project_fr);
+  setValue('projet-en',  data.project_en);
+  setValue('strengths',  (data.strengths_fr || []).join('\n'));
+  setValue('weaknesses', (data.weaknesses_fr || []).join('\n'));
+}
+
+async function saveProfile() {
+  const btn = document.getElementById('save-profile-btn');
+  const statusEl = document.getElementById('profile-status');
+  btn.disabled = true;
+  statusEl.textContent = 'Enregistrement…';
+  statusEl.className = 'save-status';
+
+  const payload = {
+    bio_fr:        getValue('bio-fr'),
+    bio_en:        getValue('bio-en'),
+    project_fr:    getValue('projet-fr'),
+    project_en:    getValue('projet-en'),
+    strengths_fr:  getValue('strengths').split('\n').filter(Boolean),
+    weaknesses_fr: getValue('weaknesses').split('\n').filter(Boolean),
+    updated_at:    new Date().toISOString(),
+  };
+
+  const { error } = await sb.from('profile').upsert({ id: 1, ...payload });
+  btn.disabled = false;
+  if (error) {
+    statusEl.textContent = 'Erreur : ' + error.message;
+    statusEl.className = 'save-status error';
+  } else {
+    statusEl.textContent = '✓ Profil enregistré !';
+    setTimeout(() => { statusEl.textContent = ''; }, 3000);
+  }
+}
+
+/* ══════════════════════════════════════════
+   FORM — OPEN / FIELDS / SUBMIT
+══════════════════════════════════════════ */
+const FORM_FIELDS = {
+  activity: [
+    { key: 'theme_id',      label: 'Thème (ID)',                type: 'theme-select' },
+    { key: 'title_fr',      label: 'Titre (FR)',                type: 'text',     required: true },
+    { key: 'title_en',      label: 'Title (EN)',                type: 'text' },
+    { key: 'type',          label: 'Type',                      type: 'type-select' },
+    { key: 'hours',         label: 'Heures',                    type: 'number' },
+    { key: 'date',          label: 'Date',                      type: 'date' },
+    { key: 'reflection_fr', label: 'Analyse réflexive (FR)',    type: 'textarea', rows: 8, required: true },
+    { key: 'reflection_en', label: 'Reflective analysis (EN)',  type: 'textarea', rows: 8 },
+    { key: 'proof_url',     label: 'URL preuve (lien/photo)',   type: 'url' },
+    { key: 'order_index',   label: 'Ordre',                     type: 'number' },
+  ],
+  theme: [
+    { key: 'title_fr',    label: 'Titre (FR)',  type: 'text', required: true },
+    { key: 'title_en',    label: 'Title (EN)',  type: 'text' },
+    { key: 'slug',        label: 'Slug (identifiant unique, ex: web)', type: 'text', required: true },
+    { key: 'icon',        label: 'Emoji icône', type: 'text' },
+    { key: 'hours',       label: 'Heures totales (max 10)', type: 'number' },
+    { key: 'order_index', label: 'Ordre',       type: 'number' },
+  ],
+  skill: [
+    { key: 'name',        label: 'Nom',      type: 'text',   required: true },
+    { key: 'level',       label: 'Niveau (0–100)', type: 'number' },
+    { key: 'category',    label: 'Catégorie', type: 'text' },
+    { key: 'order_index', label: 'Ordre',    type: 'number' },
+  ],
+  timeline: [
+    { key: 'year',        label: 'Année',      type: 'text',     required: true },
+    { key: 'title_fr',    label: 'Titre (FR)', type: 'text',     required: true },
+    { key: 'title_en',    label: 'Title (EN)', type: 'text' },
+    { key: 'desc_fr',     label: 'Description (FR)', type: 'textarea', rows: 3 },
+    { key: 'desc_en',     label: 'Description (EN)', type: 'textarea', rows: 3 },
+    { key: 'type',        label: 'Type (education/work/project/future)', type: 'text' },
+  ],
+};
+
+const TABLE_MAP = {
+  activity: 'activities',
+  theme:    'themes',
+  skill:    'skills',
+  timeline: 'timeline_items',
+};
+
+async function openForm(type, data = null) {
+  formContext = type;
+  editingItem = data ? { table: TABLE_MAP[type], id: data.id } : null;
+
+  const overlay = document.getElementById('form-overlay');
+  const title   = document.getElementById('form-title');
+  const fields  = document.getElementById('form-fields');
+  const delBtn  = document.getElementById('delete-btn');
+
+  const labels = { activity: 'activité', theme: 'thème', skill: 'compétence', timeline: 'étape' };
+  title.textContent = data ? `Modifier ${labels[type]}` : `Nouvelle ${labels[type]}`;
+  delBtn.style.display = data ? 'flex' : 'none';
+
+  let themes = [];
+  if (type === 'activity') {
+    const { data: t } = await sb.from('themes').select('id, title_fr').order('order_index');
+    themes = t || [];
+  }
+
+  fields.innerHTML = FORM_FIELDS[type].map(f => {
+    const val = data?.[f.key] ?? '';
+    return buildField(f, val, themes);
+  }).join('');
+
+  overlay.classList.add('open');
+}
+
+function buildField(f, val, themes) {
+  const req = f.required ? 'required' : '';
+  if (f.type === 'theme-select') {
+    const opts = themes.map(t => `<option value="${t.id}" ${val == t.id ? 'selected' : ''}>${t.title_fr}</option>`).join('');
+    return `<div class="form-group"><label>${f.label}</label><select name="${f.key}" ${req}><option value="">— Choisir —</option>${opts}</select></div>`;
+  }
+  if (f.type === 'type-select') {
+    const types = ['formation','hackathon','conference','visite','jobday','projet','salon'];
+    const opts = types.map(t => `<option value="${t}" ${val === t ? 'selected' : ''}>${t}</option>`).join('');
+    return `<div class="form-group"><label>${f.label}</label><select name="${f.key}"><option value="">—</option>${opts}</select></div>`;
+  }
+  if (f.type === 'textarea') {
+    return `<div class="form-group"><label>${f.label}</label><textarea name="${f.key}" rows="${f.rows || 4}" ${req}>${escHtml(val)}</textarea></div>`;
+  }
+  return `<div class="form-group"><label>${f.label}</label><input type="${f.type}" name="${f.key}" value="${escHtml(String(val))}" ${req}></div>`;
+}
+
+async function handleFormSubmit(e) {
+  e.preventDefault();
+  const form    = document.getElementById('item-form');
+  const data    = Object.fromEntries(new FormData(form).entries());
+  const table   = TABLE_MAP[formContext];
+
+  // coerce numbers
+  if (data.hours)       data.hours       = Number(data.hours);
+  if (data.level)       data.level       = Number(data.level);
+  if (data.order_index) data.order_index = Number(data.order_index);
+
+  let error;
+  if (editingItem) {
+    ({ error } = await sb.from(table).update(data).eq('id', editingItem.id));
+  } else {
+    ({ error } = await sb.from(table).insert(data));
+  }
+
+  if (error) {
+    alert('Erreur : ' + error.message);
+    return;
+  }
+  closeForm();
+  loadTab(activeTab);
+}
+
+async function editItem(type, id) {
+  const table = TABLE_MAP[type];
+  const { data } = await sb.from(table).select('*').eq('id', id).single();
+  if (data) openForm(type, data);
+}
+
+document.getElementById('delete-btn')?.addEventListener('click', async () => {
+  if (!editingItem) return;
+  if (!confirm('Supprimer cet élément ?')) return;
+  await sb.from(editingItem.table).delete().eq('id', editingItem.id);
+  closeForm();
+  loadTab(activeTab);
+});
+
+function closeForm() {
+  document.getElementById('form-overlay').classList.remove('open');
+  editingItem = null;
+}
+
+/* ══════════════════════════════════════════
+   CV UPLOAD (Supabase Storage)
+══════════════════════════════════════════ */
+function setupCvUpload(lang) {
+  const fileInput = document.getElementById(`cv-${lang}-file`);
+  const nameEl    = document.getElementById(`cv-${lang}-name`);
+  const uploadBtn = document.getElementById(`upload-cv-${lang}`);
+  const statusEl  = document.getElementById(`cv-${lang}-status`);
+
+  fileInput?.addEventListener('change', () => {
+    nameEl.textContent = fileInput.files[0]?.name || 'Aucun fichier';
+  });
+
+  uploadBtn?.addEventListener('click', async () => {
+    const file = fileInput?.files?.[0];
+    if (!file) { statusEl.textContent = 'Aucun fichier sélectionné.'; statusEl.className = 'save-status error'; return; }
+    uploadBtn.disabled = true;
+    statusEl.textContent = 'Téléversement…';
+    statusEl.className = 'save-status';
+
+    const { error } = await sb.storage.from('cv').upload(`cv-${lang}.pdf`, file, { upsert: true });
+    uploadBtn.disabled = false;
+    if (error) {
+      statusEl.textContent = 'Erreur : ' + error.message;
+      statusEl.className = 'save-status error';
+    } else {
+      statusEl.textContent = '✓ CV téléversé !';
+      setTimeout(() => { statusEl.textContent = ''; }, 3000);
+    }
+  });
+}
+
+/* ══════════════════════════════════════════
+   HELPERS
+══════════════════════════════════════════ */
+function escHtml(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;').replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+function getValue(id) { return document.getElementById(id)?.value || ''; }
+function setValue(id, val) { const el = document.getElementById(id); if (el) el.value = val || ''; }
+function typeLabel(type) {
+  const m = { hackathon:'Hackathon', formation:'Formation', conference:'Conférence', visite:'Visite', jobday:'Job Day', projet:'Projet', salon:'Salon IT' };
+  return m[type] || type || '—';
+}
+
+/* expose for inline onclick */
+window.editItem = editItem;

@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — Portfolio FMC</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500&family=Space+Mono&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body class="admin-body">
+
+  <!-- ── LOGIN ── -->
+  <div id="login-screen">
+    <div class="login-card">
+      <div class="login-logo">&lt;FMC/&gt;</div>
+      <h1 class="login-title">Administration</h1>
+      <p class="login-sub">Connectez-vous pour gérer le contenu du portfolio.</p>
+      <form id="login-form">
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" placeholder="you@example.com" required autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label for="password">Mot de passe</label>
+          <input type="password" id="password" placeholder="••••••••" required autocomplete="current-password">
+        </div>
+        <p class="login-error" id="login-error"></p>
+        <button type="submit" class="btn-primary full" id="login-btn">Se connecter</button>
+      </form>
+      <a href="index.html" class="back-link">← Retour au portfolio</a>
+    </div>
+  </div>
+
+  <!-- ── DASHBOARD ── -->
+  <div id="dashboard" style="display:none">
+    <aside class="sidebar">
+      <div class="sidebar-logo">&lt;FMC/&gt;</div>
+      <nav class="sidebar-nav">
+        <button class="sn-btn active" data-tab="activities">📋 Activités</button>
+        <button class="sn-btn" data-tab="themes">🏷️ Thèmes</button>
+        <button class="sn-btn" data-tab="skills">💡 Compétences</button>
+        <button class="sn-btn" data-tab="timeline">📅 Parcours</button>
+        <button class="sn-btn" data-tab="profile">👤 Profil & Projet</button>
+        <button class="sn-btn" data-tab="cv">📄 CV</button>
+      </nav>
+      <button id="logout-btn" class="logout-btn">⬅ Déconnexion</button>
+    </aside>
+
+    <main class="admin-main">
+      <div class="admin-topbar">
+        <h2 id="tab-title">Activités</h2>
+        <a href="index.html" target="_blank" class="preview-link">Voir le portfolio ↗</a>
+      </div>
+
+      <!-- ACTIVITÉS -->
+      <div id="tab-activities" class="tab-pane active">
+        <div class="pane-header">
+          <p class="pane-desc">Gérez les activités d'acquisition de compétences.</p>
+          <button class="btn-primary" id="new-activity-btn">+ Nouvelle activité</button>
+        </div>
+        <div id="activities-list" class="item-list"></div>
+      </div>
+
+      <!-- THÈMES -->
+      <div id="tab-themes" class="tab-pane">
+        <div class="pane-header">
+          <p class="pane-desc">Organisez les thèmes (max 10h / thème, min 6 thèmes).</p>
+          <button class="btn-primary" id="new-theme-btn">+ Nouveau thème</button>
+        </div>
+        <div id="themes-list" class="item-list"></div>
+      </div>
+
+      <!-- COMPÉTENCES -->
+      <div id="tab-skills" class="tab-pane">
+        <div class="pane-header">
+          <p class="pane-desc">Mettez à jour votre stack technique.</p>
+          <button class="btn-primary" id="new-skill-btn">+ Nouvelle compétence</button>
+        </div>
+        <div id="skills-list" class="item-list"></div>
+      </div>
+
+      <!-- PARCOURS -->
+      <div id="tab-timeline" class="tab-pane">
+        <div class="pane-header">
+          <p class="pane-desc">Éditez les étapes de votre parcours.</p>
+          <button class="btn-primary" id="new-tl-btn">+ Nouvelle étape</button>
+        </div>
+        <div id="timeline-list" class="item-list"></div>
+      </div>
+
+      <!-- PROFIL -->
+      <div id="tab-profile" class="tab-pane">
+        <div class="pane-header">
+          <p class="pane-desc">Mettez à jour votre présentation et votre projet professionnel.</p>
+        </div>
+        <div class="profile-form glass-admin">
+          <div class="form-row-2">
+            <div class="form-group">
+              <label>Bio (FR)</label>
+              <textarea id="bio-fr" rows="4" placeholder="Présentation en français…"></textarea>
+            </div>
+            <div class="form-group">
+              <label>Bio (EN)</label>
+              <textarea id="bio-en" rows="4" placeholder="Presentation in English…"></textarea>
+            </div>
+          </div>
+          <div class="form-row-2">
+            <div class="form-group">
+              <label>Projet professionnel (FR)</label>
+              <textarea id="projet-fr" rows="6" placeholder="Décrivez votre projet en français…"></textarea>
+            </div>
+            <div class="form-group">
+              <label>Professional project (EN)</label>
+              <textarea id="projet-en" rows="6" placeholder="Describe your project in English…"></textarea>
+            </div>
+          </div>
+          <div class="form-row-2">
+            <div class="form-group">
+              <label>Points forts (un par ligne)</label>
+              <textarea id="strengths" rows="4" placeholder="Curiosité intellectuelle&#10;Esprit analytique…"></textarea>
+            </div>
+            <div class="form-group">
+              <label>Axes d'amélioration (un par ligne)</label>
+              <textarea id="weaknesses" rows="4" placeholder="Prise de parole…&#10;Gestion du stress…"></textarea>
+            </div>
+          </div>
+          <button class="btn-primary" id="save-profile-btn">Enregistrer le profil</button>
+          <p class="save-status" id="profile-status"></p>
+        </div>
+      </div>
+
+      <!-- CV -->
+      <div id="tab-cv" class="tab-pane">
+        <div class="pane-header">
+          <p class="pane-desc">Téléversez votre CV (PDF) en français et en anglais.</p>
+        </div>
+        <div class="cv-upload-grid">
+          <div class="cv-upload-card glass-admin">
+            <div class="cv-flag">🇫🇷</div>
+            <h3>CV Français</h3>
+            <input type="file" id="cv-fr-file" accept=".pdf" class="file-input">
+            <label for="cv-fr-file" class="btn-ghost file-label">Choisir un fichier PDF</label>
+            <p class="file-name" id="cv-fr-name">Aucun fichier sélectionné</p>
+            <button class="btn-primary" id="upload-cv-fr">Téléverser</button>
+            <p class="save-status" id="cv-fr-status"></p>
+          </div>
+          <div class="cv-upload-card glass-admin">
+            <div class="cv-flag">🇬🇧</div>
+            <h3>CV English</h3>
+            <input type="file" id="cv-en-file" accept=".pdf" class="file-input">
+            <label for="cv-en-file" class="btn-ghost file-label">Choose a PDF file</label>
+            <p class="file-name" id="cv-en-name">No file selected</p>
+            <button class="btn-primary" id="upload-cv-en">Upload</button>
+            <p class="save-status" id="cv-en-status"></p>
+          </div>
+        </div>
+        <div class="cv-note glass-admin">
+          <p>💡 Sans Supabase Storage, placez manuellement vos PDFs dans <code>assets/cv/cv-fr.pdf</code> et <code>assets/cv/cv-en.pdf</code> puis faites un commit GitHub.</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ── MODAL FORM ── -->
+  <div id="form-overlay" class="modal-overlay">
+    <div class="modal-box glass-admin" id="form-box">
+      <button id="form-close" class="modal-close">&times;</button>
+      <h3 id="form-title">Nouvelle activité</h3>
+      <form id="item-form">
+        <div id="form-fields"></div>
+        <div class="form-actions">
+          <button type="submit" class="btn-primary">Enregistrer</button>
+          <button type="button" id="delete-btn" class="btn-danger" style="display:none">Supprimer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>
