@@ -312,7 +312,7 @@ const FORM_FIELDS = {
     { key: 'hours',         label: 'Heures',               type: 'number' },
     { key: 'date',          label: 'Date',                 type: 'date' },
     { key: '_row3end',      type: 'row-end' },
-    { key: 'reflection_fr', label: 'Analyse réflexive (FR) — min. 1 page (~2000 caractères)', type: 'reflection', rows: 14, required: true },
+    { key: 'reflection_fr', label: 'Analyse réflexive (FR) — min. 1 page (~1500 caractères)', type: 'reflection', rows: 14, required: true },
     { key: 'reflection_en', label: 'Reflective analysis (EN)',                                type: 'reflection', rows: 14 },
     { key: '_proof',        type: 'proof-section' },
     { key: 'proof_url',     label: 'Lien vers la preuve (URL, Google Drive…)',  type: 'url' },
@@ -415,14 +415,14 @@ function buildField(f, val, themes) {
   }
   if (f.type === 'reflection') {
     const count = String(val || '').length;
-    const cls   = count >= 2000 ? 'ok' : count >= 1000 ? 'warn' : 'low';
+    const cls   = count >= 1500 ? 'ok' : count >= 1000 ? 'warn' : 'low';
     return `
       <div class="form-group">
         <label>${f.label}</label>
         <textarea name="${f.key}" rows="${f.rows || 8}" ${req} class="reflection-ta" data-counter="${f.key}-counter">${escHtml(val)}</textarea>
         <div class="char-counter ${cls}" id="${f.key}-counter">
           <span class="char-num">${count}</span> caractères
-          <span class="char-target">${count >= 2000 ? '✓ suffisant' : `· objectif : 2000+`}</span>
+          <span class="char-target">${count >= 1500 ? '✓ suffisant' : `· objectif : 1500+`}</span>
         </div>
       </div>`;
   }
@@ -440,8 +440,8 @@ function setupCharCounters() {
       const el     = document.getElementById(counterId);
       if (!el) return;
       el.querySelector('.char-num').textContent = count;
-      el.querySelector('.char-target').textContent = count >= 2000 ? '✓ suffisant' : `· objectif : 2000+`;
-      el.className = `char-counter ${count >= 2000 ? 'ok' : count >= 1000 ? 'warn' : 'low'}`;
+      el.querySelector('.char-target').textContent = count >= 1500 ? '✓ suffisant' : `· objectif : 1500+`;
+      el.className = `char-counter ${count >= 1500 ? 'ok' : count >= 1000 ? 'warn' : 'low'}`;
     });
   });
 }
