@@ -266,7 +266,7 @@ h2 {
   height: 100%;
   z-index: 0;
   pointer-events: none;
-  opacity: 0.38;
+  opacity: 0.92; /* overridden dynamically by scene.js on scroll */
 }
 
 section, footer {
