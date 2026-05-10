@@ -414,16 +414,19 @@ function buildField(f, val, themes) {
     return `<div class="form-group"><label>${f.label}</label><select name="${f.key}"><option value="">— Type —</option>${opts}</select></div>`;
   }
   if (f.type === 'reflection') {
+    const isFr  = f.key === 'reflection_fr';
     const count = String(val || '').length;
-    const cls   = count >= 1500 ? 'ok' : count >= 1000 ? 'warn' : 'low';
+    const cls   = count >= 1500 ? 'ok' : count >= 750 ? 'warn' : 'low';
+    const counter = isFr ? `
+        <div class="char-counter ${cls}" id="${f.key}-counter">
+          <span class="char-num">${count}</span> caractères
+          <span class="char-target">${count >= 1500 ? '✓ suffisant' : '· objectif : 1500+'}</span>
+        </div>` : '';
     return `
       <div class="form-group">
         <label>${f.label}</label>
-        <textarea name="${f.key}" rows="${f.rows || 8}" ${req} class="reflection-ta" data-counter="${f.key}-counter">${escHtml(val)}</textarea>
-        <div class="char-counter ${cls}" id="${f.key}-counter">
-          <span class="char-num">${count}</span> caractères
-          <span class="char-target">${count >= 1500 ? '✓ suffisant' : `· objectif : 1500+`}</span>
-        </div>
+        <textarea name="${f.key}" rows="${f.rows || 8}" ${req} class="${isFr ? 'reflection-ta' : ''}" ${isFr ? `data-counter="${f.key}-counter"` : ''}>${escHtml(val)}</textarea>
+        ${counter}
       </div>`;
   }
   if (f.type === 'textarea') {
@@ -440,8 +443,8 @@ function setupCharCounters() {
       const el     = document.getElementById(counterId);
       if (!el) return;
       el.querySelector('.char-num').textContent = count;
-      el.querySelector('.char-target').textContent = count >= 1500 ? '✓ suffisant' : `· objectif : 1500+`;
-      el.className = `char-counter ${count >= 1500 ? 'ok' : count >= 1000 ? 'warn' : 'low'}`;
+      el.querySelector('.char-target').textContent = count >= 1500 ? '✓ suffisant' : '· objectif : 1500+';
+      el.className = `char-counter ${count >= 1500 ? 'ok' : count >= 750 ? 'warn' : 'low'}`;
     });
   });
 }
@@ -500,10 +503,14 @@ async function handleFormSubmit(e) {
   const data    = Object.fromEntries(new FormData(form).entries());
   const table   = TABLE_MAP[formContext];
 
-  // coerce numbers
+  // coerce types — empty strings → null for non-text fields
   if (data.hours)       data.hours       = Number(data.hours);
   if (data.level)       data.level       = Number(data.level);
   if (data.order_index) data.order_index = Number(data.order_index);
+  if (data.date        === '') data.date        = null;
+  if (data.proof_url   === '') data.proof_url   = null;
+  if (data.title_en    === '') data.title_en    = null;
+  if (data.reflection_en === '') data.reflection_en = null;
 
   let error;
   if (editingItem) {
