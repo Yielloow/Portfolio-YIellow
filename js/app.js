@@ -560,6 +560,17 @@ document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal
 /* ══════════════════════════════════════════
    TIMELINE
 ══════════════════════════════════════════ */
+async function loadAndRenderTimeline() {
+  let items = STATIC_TIMELINE;
+  if (sb) {
+    try {
+      const { data, error } = await sb.from('timeline_items').select('*').order('year');
+      if (!error && data?.length) items = data;
+    } catch (_) {}
+  }
+  renderTimeline(items);
+}
+
 function renderTimeline(items) {
   const container = document.getElementById('timeline');
   if (!container) return;
@@ -644,7 +655,7 @@ async function init() {
   await loadProfileData();
   await loadSkillsData();
   await loadAndRenderActivities();
-  renderTimeline(STATIC_TIMELINE);
+  await loadAndRenderTimeline();
 }
 
 document.addEventListener('DOMContentLoaded', init);
