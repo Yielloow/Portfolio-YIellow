@@ -255,8 +255,78 @@ function initAnimations() {
 }
 
 /* ══════════════════════════════════════════
+   PROFILE — CV URLs + section order
+══════════════════════════════════════════ */
+async function loadProfileData() {
+  if (!sb) return;
+  try {
+    const { data } = await sb.from('profile')
+      .select('cv_fr_url, cv_en_url, section_order, bio_fr, bio_en, project_fr, project_en, strengths_fr, weaknesses_fr')
+      .single();
+    if (!data) return;
+
+    // CV download buttons
+    if (data.cv_fr_url) {
+      const btn = document.getElementById('cv-fr');
+      if (btn) { btn.href = data.cv_fr_url; btn.removeAttribute('download'); }
+    }
+    if (data.cv_en_url) {
+      const btn = document.getElementById('cv-en');
+      if (btn) { btn.href = data.cv_en_url; btn.removeAttribute('download'); }
+    }
+
+    // Section order
+    if (data.section_order?.length) applySectionOrder(data.section_order);
+
+    // About text
+    const bioKey = lang === 'en' && data.bio_en ? 'bio_en' : 'bio_fr';
+    if (data[bioKey]) {
+      const el = document.getElementById('about-text');
+      if (el) el.innerHTML = `<p>${escHtml(data[bioKey])}</p>`;
+    }
+
+    // Project text
+    const projKey = lang === 'en' && data.project_en ? 'project_en' : 'project_fr';
+    if (data[projKey]) {
+      const el = document.getElementById('projet-text');
+      if (el) el.innerHTML = `<p>${escHtml(data[projKey])}</p>`;
+    }
+
+    // Strengths / weaknesses
+    if (data.strengths_fr?.length) {
+      const el = document.getElementById('strengths-list');
+      if (el) el.innerHTML = data.strengths_fr.map(s => `<li>${escHtml(s)}</li>`).join('');
+    }
+    if (data.weaknesses_fr?.length) {
+      const el = document.getElementById('weaknesses-list');
+      if (el) el.innerHTML = data.weaknesses_fr.map(w => `<li>${escHtml(w)}</li>`).join('');
+    }
+  } catch (_) {}
+}
+
+function applySectionOrder(order) {
+  const wrapper = document.getElementById('sections-wrapper');
+  if (!wrapper) return;
+  order.forEach(id => {
+    const section = document.getElementById(id);
+    if (section) wrapper.appendChild(section);
+  });
+}
+
+/* ══════════════════════════════════════════
    SKILLS
 ══════════════════════════════════════════ */
+async function loadSkillsData() {
+  let skills = STATIC_SKILLS;
+  if (sb) {
+    try {
+      const { data, error } = await sb.from('skills').select('*').order('order_index');
+      if (!error && data?.length) skills = data;
+    } catch (_) {}
+  }
+  renderSkills(skills);
+}
+
 function renderSkills(skills) {
   const container = document.getElementById('skills-container');
   if (!container) return;
@@ -571,7 +641,8 @@ async function init() {
   initNav();
   initAnimations();
   startTyping();
-  renderSkills(STATIC_SKILLS);
+  await loadProfileData();
+  await loadSkillsData();
   await loadAndRenderActivities();
   renderTimeline(STATIC_TIMELINE);
 }

@@ -149,7 +149,7 @@ async function loadTab(tab) {
   if (tab === 'themes')     await loadThemes();
   if (tab === 'skills')     await loadSkills();
   if (tab === 'timeline')   await loadTimeline();
-  if (tab === 'profile')    await loadProfile();
+  if (tab === 'profile')    { await loadProfile(); await loadSectionOrder(); }
 }
 
 /* ── Activities ── */
@@ -598,12 +598,73 @@ function setupCvUpload(lang) {
     if (error) {
       statusEl.textContent = 'Erreur : ' + error.message;
       statusEl.className = 'save-status error';
-    } else {
-      statusEl.textContent = '✓ CV téléversé !';
-      setTimeout(() => { statusEl.textContent = ''; }, 3000);
+      return;
     }
+    // Save public URL to profile so portfolio can link to it
+    const { data: { publicUrl } } = sb.storage.from('cv').getPublicUrl(`cv-${lang}.pdf`);
+    await sb.from('profile').upsert({ id: 1, [`cv_${lang}_url`]: publicUrl });
+    statusEl.textContent = `✓ CV téléversé et lié au portfolio !`;
+    setTimeout(() => { statusEl.textContent = ''; }, 4000);
   });
 }
+
+/* ══════════════════════════════════════════
+   SECTION ORDERING
+══════════════════════════════════════════ */
+const SECTION_LABELS = {
+  about:       '👤 À propos',
+  projet:      '🎯 Projet professionnel',
+  competences: '💡 Stack technique',
+  activites:   '📋 Activités & Thèmes',
+  parcours:    '📅 Parcours',
+  cv:          '📄 CV',
+};
+const DEFAULT_ORDER = ['about','projet','competences','activites','parcours','cv'];
+
+let currentSectionOrder = [...DEFAULT_ORDER];
+
+async function loadSectionOrder() {
+  const container = document.getElementById('section-order-list');
+  if (!container) return;
+  try {
+    const { data } = await sb.from('profile').select('section_order').single();
+    if (data?.section_order?.length) currentSectionOrder = data.section_order;
+  } catch (_) {}
+  renderSectionOrder(container);
+}
+
+function renderSectionOrder(container) {
+  container.innerHTML = currentSectionOrder.map((id, i) => `
+    <div class="section-order-row" data-id="${id}">
+      <span class="so-handle">⠿</span>
+      <span class="so-label">${SECTION_LABELS[id] || id}</span>
+      <div class="so-btns">
+        <button class="so-btn" onclick="moveSectionOrder(${i},-1)" ${i === 0 ? 'disabled' : ''}>↑</button>
+        <button class="so-btn" onclick="moveSectionOrder(${i}, 1)" ${i === currentSectionOrder.length-1 ? 'disabled' : ''}>↓</button>
+      </div>
+    </div>`).join('');
+}
+
+async function moveSectionOrder(idx, dir) {
+  const newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= currentSectionOrder.length) return;
+  [currentSectionOrder[idx], currentSectionOrder[newIdx]] = [currentSectionOrder[newIdx], currentSectionOrder[idx]];
+  const container = document.getElementById('section-order-list');
+  renderSectionOrder(container);
+  await saveSectionOrder();
+}
+
+async function saveSectionOrder() {
+  const statusEl = document.getElementById('section-order-status');
+  const { error } = await sb.from('profile').upsert({ id: 1, section_order: currentSectionOrder });
+  if (statusEl) {
+    statusEl.textContent = error ? 'Erreur : ' + error.message : '✓ Ordre sauvegardé';
+    statusEl.className = `save-status${error ? ' error' : ''}`;
+    setTimeout(() => { statusEl.textContent = ''; }, 2500);
+  }
+}
+
+window.moveSectionOrder = moveSectionOrder;
 
 /* ══════════════════════════════════════════
    HELPERS
