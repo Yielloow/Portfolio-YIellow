@@ -50,5 +50,6 @@
   "footer.made": "Fait avec Three.js, GSAP & passion",
 
   "modal.hours": "heures",
-  "modal.proof": "Preuve de participation :"
+  "modal.proof": "Preuves de participation :",
+  "modal.proof_link": "Voir la preuve"
 }

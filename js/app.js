@@ -141,6 +141,8 @@ const STATIC_TIMELINE = [
 /* ══════════════════════════════════════════
    I18N
 ══════════════════════════════════════════ */
+let currentActivities = []; // kept in memory for modal lookup
+
 let lang = localStorage.getItem('portfolio-lang') || 'fr';
 let translations = {};
 
@@ -326,6 +328,7 @@ async function loadAndRenderActivities() {
     } catch (_) {}
   }
 
+  currentActivities = activities;
   renderFilterBar(themes);
   renderActivities(activities, themes);
   updateStats(themes, activities);
@@ -435,17 +438,33 @@ function animateCounter(id, target) {
    MODAL
 ══════════════════════════════════════════ */
 function openModal(card) {
-  const overlay = document.getElementById('modal-overlay');
-  document.getElementById('modal-title').textContent       = card.dataset.title;
-  document.getElementById('modal-type').textContent        = typeLabel(card.dataset.type);
-  document.getElementById('modal-type').className         = `modal-type-badge ${card.dataset.type}`;
-  document.getElementById('modal-hours').textContent       = `${card.dataset.hours} ${t('modal.hours')}`;
-  document.getElementById('modal-date').textContent        = card.dataset.date;
-  document.getElementById('modal-reflection').textContent  = card.dataset.reflection;
+  const id       = card.dataset.id;
+  const activity = currentActivities.find(a => String(a.id) === String(id)) || {};
+
+  const title      = lang === 'en' && activity.title_en      ? activity.title_en      : activity.title_fr      || card.dataset.title;
+  const reflection = lang === 'en' && activity.reflection_en ? activity.reflection_en : activity.reflection_fr || '';
+  const dateStr    = activity.date ? new Date(activity.date).toLocaleDateString(lang === 'fr' ? 'fr-BE' : 'en-GB', { year:'numeric', month:'long', day:'numeric' }) : '';
+
+  document.getElementById('modal-title').textContent      = title;
+  document.getElementById('modal-type').textContent       = typeLabel(activity.type || card.dataset.type);
+  document.getElementById('modal-type').className        = `modal-type-badge ${activity.type || card.dataset.type}`;
+  document.getElementById('modal-hours').textContent      = `${activity.hours || 0} ${t('modal.hours')}`;
+  document.getElementById('modal-date').textContent       = dateStr;
+  document.getElementById('modal-reflection').textContent = reflection;
 
   const proofEl = document.getElementById('modal-proof');
-  if (card.dataset.proof) {
-    proofEl.innerHTML = `<span>${t('modal.proof')}</span> <a href="${card.dataset.proof}" target="_blank" rel="noopener">${card.dataset.proof}</a>`;
+  const rawProof = activity.proof_url || '';
+  const proofLinks = rawProof.split('\n').map(u => u.trim()).filter(Boolean);
+
+  if (proofLinks.length) {
+    proofEl.innerHTML = `
+      <span>${t('modal.proof')}</span>
+      <div class="proof-links">
+        ${proofLinks.map((url, i) => `
+          <a href="${escHtml(url)}" target="_blank" rel="noopener">
+            🔗 ${t('modal.proof_link')} ${proofLinks.length > 1 ? i + 1 : ''}
+          </a>`).join('')}
+      </div>`;
   } else {
     proofEl.innerHTML = '';
   }

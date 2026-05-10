@@ -315,7 +315,7 @@ const FORM_FIELDS = {
     { key: 'reflection_fr', label: 'Analyse réflexive (FR) — min. 1 page (~1500 caractères)', type: 'reflection', rows: 14, required: true },
     { key: 'reflection_en', label: 'Reflective analysis (EN)',                                type: 'reflection', rows: 14 },
     { key: '_proof',        type: 'proof-section' },
-    { key: 'proof_url',     label: 'Lien vers la preuve (URL, Google Drive…)',  type: 'url' },
+    { key: 'proof_url',     label: 'Preuves de participation (un lien par ligne)', type: 'multi-url' },
     { key: 'order_index',   label: 'Ordre d\'affichage',   type: 'number' },
   ],
   theme: [
@@ -429,6 +429,14 @@ function buildField(f, val, themes) {
         ${counter}
       </div>`;
   }
+  if (f.type === 'multi-url') {
+    return `
+      <div class="form-group">
+        <label>${f.label}</label>
+        <textarea name="${f.key}" rows="3" placeholder="https://drive.google.com/...&#10;https://photo.example.com/...">${escHtml(val)}</textarea>
+        <span class="field-hint">Un lien par ligne · photo, certificat, Drive, OneDrive…</span>
+      </div>`;
+  }
   if (f.type === 'textarea') {
     return `<div class="form-group"><label>${f.label}</label><textarea name="${f.key}" rows="${f.rows || 4}" ${req}>${escHtml(val)}</textarea></div>`;
   }
@@ -507,8 +515,9 @@ async function handleFormSubmit(e) {
   if (data.hours)       data.hours       = Number(data.hours);
   if (data.level)       data.level       = Number(data.level);
   if (data.order_index) data.order_index = Number(data.order_index);
-  if (data.date        === '') data.date        = null;
-  if (data.proof_url   === '') data.proof_url   = null;
+  if (data.date      === '') data.date      = null;
+  if (data.proof_url === '') data.proof_url = null;
+  else if (data.proof_url) data.proof_url = data.proof_url.trim();
   if (data.title_en    === '') data.title_en    = null;
   if (data.reflection_en === '') data.reflection_en = null;
 

@@ -946,12 +946,34 @@ footer {
   padding-top: 20px;
   border-top: 1px solid var(--border);
 }
-.modal-proof a {
+.modal-proof > span {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+  display: block;
+  margin-bottom: 10px;
+}
+.proof-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.proof-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-family: var(--font-mono);
   font-size: 0.8rem;
   color: var(--accent);
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  border: 1px solid rgba(0,212,255,0.25);
+  padding: 5px 14px;
+  border-radius: 50px;
+  transition: var(--transition);
+}
+.proof-links a:hover {
+  background: rgba(0,212,255,0.1);
+  border-color: var(--accent);
 }
 
 /* ══════════════════════════════════════════
