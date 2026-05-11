@@ -565,6 +565,38 @@ function openModal(card, activity) {
   document.body.style.overflow = 'hidden';
 }
 
+/* Retourne { icon, label, color } selon le domaine */
+function getProofMeta(url) {
+  const SITES = [
+    { match: /github\.com|github\.io/,              icon: '🐙', label: 'GitHub',        color: '#6e40c9' },
+    { match: /gitlab\.com/,                          icon: '🦊', label: 'GitLab',        color: '#e24329' },
+    { match: /drive\.google\.com/,                   icon: '📁', label: 'Google Drive',  color: '#34a853' },
+    { match: /docs\.google\.com/,                    icon: '📄', label: 'Google Docs',   color: '#4285f4' },
+    { match: /onedrive\.live\.com|1drv\.ms/,         icon: '☁️', label: 'OneDrive',      color: '#0078d4' },
+    { match: /dropbox\.com/,                         icon: '📦', label: 'Dropbox',       color: '#0061ff' },
+    { match: /figma\.com/,                           icon: '🎨', label: 'Figma',         color: '#a259ff' },
+    { match: /notion\.so/,                           icon: '📓', label: 'Notion',        color: '#ffffff' },
+    { match: /linkedin\.com/,                        icon: '💼', label: 'LinkedIn',      color: '#0a66c2' },
+    { match: /twitter\.com|x\.com/,                 icon: '🐦', label: 'Twitter / X',   color: '#1da1f2' },
+    { match: /instagram\.com/,                       icon: '📸', label: 'Instagram',     color: '#e1306c' },
+    { match: /trello\.com/,                          icon: '📋', label: 'Trello',        color: '#0052cc' },
+    { match: /reddit\.com/,                          icon: '🤖', label: 'Reddit',        color: '#ff4500' },
+    { match: /stackoverflow\.com/,                   icon: '💬', label: 'Stack Overflow',color: '#f48024' },
+    { match: /medium\.com/,                          icon: '✍️', label: 'Medium',        color: '#ffffff' },
+    { match: /canva\.com/,                           icon: '🖼️', label: 'Canva',         color: '#00c4cc' },
+    { match: /supabase\.co/,                         icon: '🗄️', label: 'Fichier',       color: '#3ecf8e' },
+  ];
+  try {
+    const host = new URL(url).hostname.replace(/^www\./, '');
+    const found = SITES.find(s => s.match.test(host));
+    if (found) return found;
+    // Domaine inconnu → affiche le hostname proprement
+    return { icon: '🔗', label: host.replace(/\.(com|org|net|io|be|fr|co)$/, ''), color: '#00d4ff' };
+  } catch {
+    return { icon: '🔗', label: 'Lien', color: '#00d4ff' };
+  }
+}
+
 function renderProofItem(url, idx, total) {
   const low = url.toLowerCase().split('?')[0];
 
@@ -599,10 +631,14 @@ function renderProofItem(url, idx, total) {
       <img src="${escHtml(url)}" alt="Preuve ${idx + 1}" class="proof-image" loading="lazy">
     </a>`;
 
-  // Lien générique (PDF, Drive, OneDrive…)
+  // Lien avec label intelligent
+  const meta = getProofMeta(url);
   return `
-    <a href="${escHtml(url)}" target="_blank" rel="noopener" class="proof-link-pill">
-      🔗 ${t('modal.proof_link')}${total > 1 ? ' ' + (idx + 1) : ''}
+    <a href="${escHtml(url)}" target="_blank" rel="noopener"
+       class="proof-link-btn" style="--link-color:${meta.color}">
+      <span class="plb-icon">${meta.icon}</span>
+      <span class="plb-label">${meta.label}</span>
+      <span class="plb-arrow">↗</span>
     </a>`;
 }
 
