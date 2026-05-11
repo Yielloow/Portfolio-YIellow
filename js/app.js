@@ -175,9 +175,9 @@ document.getElementById('lang-toggle').addEventListener('click', async () => {
   localStorage.setItem('portfolio-lang', lang);
   await loadTranslations(lang);
   applyTranslations();
-  renderSkills(STATIC_SKILLS);
-  loadAndRenderActivities();
-  renderTimeline(STATIC_TIMELINE);
+  await loadSkillsData();
+  await loadAndRenderActivities();
+  await loadAndRenderTimeline();
   restartTyping();
 });
 
@@ -268,11 +268,19 @@ async function loadProfileData() {
     // CV download buttons
     if (data.cv_fr_url) {
       const btn = document.getElementById('cv-fr');
-      if (btn) { btn.href = data.cv_fr_url; btn.removeAttribute('download'); }
+      if (btn) {
+        btn.href = data.cv_fr_url + (data.cv_fr_url.includes('?') ? '&' : '?') + 'download=CV_Fabian_Mone_Canadell_FR.pdf';
+        btn.setAttribute('target', '_blank');
+        btn.setAttribute('rel', 'noopener');
+      }
     }
     if (data.cv_en_url) {
       const btn = document.getElementById('cv-en');
-      if (btn) { btn.href = data.cv_en_url; btn.removeAttribute('download'); }
+      if (btn) {
+        btn.href = data.cv_en_url + (data.cv_en_url.includes('?') ? '&' : '?') + 'download=CV_Fabian_Mone_Canadell_EN.pdf';
+        btn.setAttribute('target', '_blank');
+        btn.setAttribute('rel', 'noopener');
+      }
     }
 
     // Section order
@@ -280,16 +288,18 @@ async function loadProfileData() {
 
     // About text
     const bioKey = lang === 'en' && data.bio_en ? 'bio_en' : 'bio_fr';
-    if (data[bioKey]) {
+    const bioVal = data[bioKey];
+    if (bioVal) {
       const el = document.getElementById('about-text');
-      if (el) el.innerHTML = `<p>${escHtml(data[bioKey])}</p>`;
+      if (el) el.innerHTML = bioVal.split(/\n\n+/).map(p => `<p>${escHtml(p.trim())}</p>`).join('');
     }
 
     // Project text
     const projKey = lang === 'en' && data.project_en ? 'project_en' : 'project_fr';
-    if (data[projKey]) {
+    const projVal = data[projKey];
+    if (projVal) {
       const el = document.getElementById('projet-text');
-      if (el) el.innerHTML = `<p>${escHtml(data[projKey])}</p>`;
+      if (el) el.innerHTML = projVal.split(/\n\n+/).map(p => `<p>${escHtml(p.trim())}</p>`).join('');
     }
 
     // Strengths / weaknesses
