@@ -330,6 +330,8 @@ function applySectionOrder(order) {
     const section = document.getElementById(id);
     if (section) wrapper.appendChild(section);
   });
+  // Recalculer les positions ScrollTrigger après réorganisation du DOM
+  if (window.ScrollTrigger) ScrollTrigger.refresh();
 }
 
 /* ══════════════════════════════════════════
@@ -404,9 +406,11 @@ async function loadAndRenderActivities() {
         sb.from('themes').select('*').order('order_index'),
         sb.from('activities').select('*').order('order_index')
       ]);
+      if (tRes.error)  console.error('[Supabase] themes:', tRes.error.message);
+      if (aRes.error)  console.error('[Supabase] activities:', aRes.error.message);
       if (!tRes.error && tRes.data?.length) themes     = tRes.data;
       if (!aRes.error && aRes.data?.length) activities = aRes.data;
-    } catch (_) {}
+    } catch (err) { console.error('[Supabase] loadActivities exception:', err); }
   }
 
   currentActivities = activities;
@@ -433,42 +437,48 @@ function renderActivities(activities, themes) {
   if (!grid) return;
 
   grid.innerHTML = activities.map(a => {
-    const theme = themes.find(th => th.id === a.theme_id);
+    const theme = themes.find(th => String(th.id) === String(a.theme_id));
     const themeLabel = theme ? (lang === 'en' && theme.title_en ? theme.title_en : theme.title_fr) : '';
-    const title = lang === 'en' && a.title_en ? a.title_en : a.title_fr;
-    const reflection = lang === 'en' && a.reflection_en ? a.reflection_en : a.reflection_fr;
-    const dateStr = a.date ? new Date(a.date).toLocaleDateString(lang === 'fr' ? 'fr-BE' : 'en-GB', { year: 'numeric', month: 'long', day: 'numeric' }) : '';
+    const title      = (lang === 'en' && a.title_en ? a.title_en : a.title_fr) || '';
+    const reflection = (lang === 'en' && a.reflection_en ? a.reflection_en : a.reflection_fr) || '';
+    const dateStr    = a.date ? new Date(a.date).toLocaleDateString(lang === 'fr' ? 'fr-BE' : 'en-GB', { year: 'numeric', month: 'long', day: 'numeric' }) : '';
 
     return `
     <div class="activity-card"
          data-theme="${theme?.slug || theme?.id || ''}"
          data-id="${a.id}"
-         data-title="${escHtml(title)}"
          data-type="${a.type || ''}"
-         data-hours="${a.hours || 0}"
-         data-date="${dateStr}"
-         data-reflection="${escHtml(reflection)}"
-         data-proof="${escHtml(a.proof_url || '')}">
+         data-hours="${a.hours || 0}">
       <div class="card-meta">
         <span class="type-badge ${a.type || ''}">${typeLabel(a.type)}</span>
         <span class="card-hours">${a.hours || 0}h</span>
       </div>
-      <div class="card-theme">${themeLabel}</div>
-      <div class="card-title">${title}</div>
-      <div class="card-excerpt">${reflection}</div>
-      <span class="card-readmore">${t('activities.readmore')}</span>
+      <div class="card-theme">${escHtml(themeLabel)}</div>
+      <div class="card-title">${escHtml(title)}</div>
+      <div class="card-excerpt">${escHtml(reflection)}</div>
+      <span class="card-readmore">${t('activities.readmore') || 'Lire →'}</span>
     </div>
     `;
   }).join('');
 
   grid.querySelectorAll('.activity-card').forEach(card => {
-    card.addEventListener('click', () => openModal(card));
+    card.addEventListener('click', () => {
+      const id = card.dataset.id;
+      openModal(card, currentActivities.find(a => String(a.id) === String(id)) || {});
+    });
   });
 
+  // Animation simple sans ScrollTrigger — évite les bugs de position
+  // quand le DOM a été réorganisé par applySectionOrder
   if (window.gsap) {
-    gsap.from('.activity-card', {
-      opacity: 0, y: 30, duration: 0.6, stagger: 0.07, ease: 'power3.out',
-      scrollTrigger: { trigger: '#activities-grid', start: 'top 85%', toggleActions: 'play none none none' }
+    const cards = grid.querySelectorAll('.activity-card');
+    cards.forEach((card, i) => {
+      gsap.fromTo(card,
+        { opacity: 0, y: 24 },
+        { opacity: 1, y: 0, duration: 0.5, ease: 'power3.out', delay: i * 0.07,
+          scrollTrigger: { trigger: card, start: 'top 92%', toggleActions: 'play none none none' }
+        }
+      );
     });
   }
 }
@@ -518,12 +528,14 @@ function animateCounter(id, target) {
 /* ══════════════════════════════════════════
    MODAL
 ══════════════════════════════════════════ */
-function openModal(card) {
-  const id       = card.dataset.id;
-  const activity = currentActivities.find(a => String(a.id) === String(id)) || {};
+function openModal(card, activity) {
+  if (!activity) {
+    const id = card.dataset.id;
+    activity = currentActivities.find(a => String(a.id) === String(id)) || {};
+  }
 
-  const title      = lang === 'en' && activity.title_en      ? activity.title_en      : activity.title_fr      || card.dataset.title;
-  const reflection = lang === 'en' && activity.reflection_en ? activity.reflection_en : activity.reflection_fr || '';
+  const title      = (lang === 'en' && activity.title_en      ? activity.title_en      : activity.title_fr)      || '';
+  const reflection = (lang === 'en' && activity.reflection_en ? activity.reflection_en : activity.reflection_fr) || '';
   const dateStr    = activity.date ? new Date(activity.date).toLocaleDateString(lang === 'fr' ? 'fr-BE' : 'en-GB', { year:'numeric', month:'long', day:'numeric' }) : '';
 
   document.getElementById('modal-title').textContent      = title;
@@ -615,8 +627,9 @@ async function loadAndRenderTimeline() {
   if (sb) {
     try {
       const { data, error } = await sb.from('timeline_items').select('*').order('year');
+      if (error) console.error('[Supabase] timeline:', error.message);
       if (!error && data?.length) items = data;
-    } catch (_) {}
+    } catch (err) { console.error('[Supabase] loadTimeline exception:', err); }
   }
   renderTimeline(items);
 }
@@ -626,15 +639,15 @@ function renderTimeline(items) {
   if (!container) return;
 
   container.innerHTML = items.map((item, i) => {
-    const title = lang === 'en' && item.title_en ? item.title_en : item.title_fr;
-    const desc  = lang === 'en' && item.desc_en  ? item.desc_en  : item.desc_fr;
+    const title = (lang === 'en' && item.title_en ? item.title_en : item.title_fr) || '';
+    const desc  = (lang === 'en' && item.desc_en  ? item.desc_en  : item.desc_fr)  || '';
     return `
     <div class="tl-item">
       <div class="tl-dot"></div>
-      <div class="tl-content" style="animation-delay:${i*0.12}s">
-        <div class="tl-year">${item.year}</div>
-        <div class="tl-title">${title}</div>
-        <div class="tl-desc">${desc}</div>
+      <div class="tl-content">
+        <div class="tl-year">${escHtml(String(item.year || ''))}</div>
+        <div class="tl-title">${escHtml(title)}</div>
+        <div class="tl-desc">${escHtml(desc)}</div>
       </div>
       <div class="tl-spacer"></div>
     </div>
@@ -642,9 +655,14 @@ function renderTimeline(items) {
   }).join('');
 
   if (window.gsap) {
-    gsap.from('.tl-item', {
-      opacity: 0, y: 30, duration: 0.6, stagger: 0.12, ease: 'power3.out',
-      scrollTrigger: { trigger: '#timeline', start: 'top 85%', toggleActions: 'play none none none' }
+    const items = container.querySelectorAll('.tl-item');
+    items.forEach((item, i) => {
+      gsap.fromTo(item,
+        { opacity: 0, y: 24 },
+        { opacity: 1, y: 0, duration: 0.5, ease: 'power3.out', delay: i * 0.1,
+          scrollTrigger: { trigger: item, start: 'top 92%', toggleActions: 'play none none none' }
+        }
+      );
     });
   }
 }
