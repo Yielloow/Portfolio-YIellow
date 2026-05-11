@@ -529,19 +529,58 @@ function openModal(card) {
   if (proofLinks.length) {
     proofEl.innerHTML = `
       <span>${t('modal.proof')}</span>
-      <div class="proof-links">
-        ${proofLinks.map((url, i) => `
-          <a href="${escHtml(url)}" target="_blank" rel="noopener">
-            🔗 ${t('modal.proof_link')} ${proofLinks.length > 1 ? i + 1 : ''}
-          </a>`).join('')}
+      <div class="proof-media">
+        ${proofLinks.map((url, i) => renderProofItem(url, i, proofLinks.length)).join('')}
       </div>`;
   } else {
     proofEl.innerHTML = '';
   }
 
+  const overlay = document.getElementById('modal-overlay');
   overlay.setAttribute('aria-hidden', 'false');
   overlay.classList.add('open');
   document.body.style.overflow = 'hidden';
+}
+
+function renderProofItem(url, idx, total) {
+  const low = url.toLowerCase().split('?')[0];
+
+  // YouTube
+  const yt = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  if (yt) return `
+    <div class="proof-video-wrap">
+      <iframe src="https://www.youtube.com/embed/${yt[1]}" frameborder="0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowfullscreen loading="lazy"></iframe>
+    </div>`;
+
+  // Vimeo
+  const vim = url.match(/vimeo\.com\/(\d+)/);
+  if (vim) return `
+    <div class="proof-video-wrap">
+      <iframe src="https://player.vimeo.com/video/${vim[1]}" frameborder="0"
+        allow="autoplay; fullscreen; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+    </div>`;
+
+  // Direct video file
+  if (/\.(mp4|webm|ogg|mov)$/.test(low)) return `
+    <div class="proof-video-wrap">
+      <video controls preload="metadata">
+        <source src="${escHtml(url)}">
+      </video>
+    </div>`;
+
+  // Image (extension ou URL Supabase proof-images)
+  if (/\.(jpg|jpeg|png|gif|webp|svg|avif|bmp)$/.test(low) || low.includes('/proof-images/')) return `
+    <a href="${escHtml(url)}" target="_blank" rel="noopener" class="proof-img-link">
+      <img src="${escHtml(url)}" alt="Preuve ${idx + 1}" class="proof-image" loading="lazy">
+    </a>`;
+
+  // Lien générique (PDF, Drive, OneDrive…)
+  return `
+    <a href="${escHtml(url)}" target="_blank" rel="noopener" class="proof-link-pill">
+      🔗 ${t('modal.proof_link')}${total > 1 ? ' ' + (idx + 1) : ''}
+    </a>`;
 }
 
 function closeModal() {

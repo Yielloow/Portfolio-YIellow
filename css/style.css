@@ -867,7 +867,7 @@ footer {
 }
 
 .modal-box {
-  max-width: 680px;
+  max-width: 760px;
   width: 100%;
   max-height: 85vh;
   overflow-y: auto;
@@ -972,6 +972,71 @@ footer {
   transition: var(--transition);
 }
 .proof-links a:hover {
+  background: rgba(0,212,255,0.1);
+  border-color: var(--accent);
+}
+
+/* ── Media proof (photos / vidéos / liens) ── */
+.proof-media {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Lecteur vidéo responsive 16:9 */
+.proof-video-wrap {
+  position: relative;
+  width: 100%;
+  padding-bottom: 56.25%;
+  height: 0;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--bg2);
+}
+.proof-video-wrap iframe,
+.proof-video-wrap video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* Galerie photos */
+.proof-img-link {
+  display: block;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  transition: var(--transition);
+  cursor: zoom-in;
+}
+.proof-img-link:hover {
+  border-color: var(--accent);
+  transform: scale(1.015);
+}
+.proof-image {
+  width: 100%;
+  max-height: 380px;
+  object-fit: contain;
+  display: block;
+  background: var(--bg2);
+}
+
+/* Lien générique */
+.proof-link-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  color: var(--accent);
+  border: 1px solid rgba(0,212,255,0.25);
+  padding: 5px 14px;
+  border-radius: 50px;
+  transition: var(--transition);
+}
+.proof-link-pill:hover {
   background: rgba(0,212,255,0.1);
   border-color: var(--accent);
 }

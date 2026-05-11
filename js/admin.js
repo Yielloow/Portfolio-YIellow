@@ -327,8 +327,8 @@ const FORM_FIELDS = {
     { key: 'hours',         label: 'Heures',               type: 'number' },
     { key: 'date',          label: 'Date',                 type: 'date' },
     { key: '_row3end',      type: 'row-end' },
-    { key: 'reflection_fr', label: 'Analyse réflexive (FR) — min. 1 page (~1500 caractères)', type: 'reflection', rows: 14, required: true },
-    { key: 'reflection_en', label: 'Reflective analysis (EN)',                                type: 'reflection', rows: 14 },
+    { key: 'reflection_fr', label: 'Analyse réflexive (FR)', type: 'reflection', rows: 14, required: true },
+    { key: 'reflection_en', label: 'Reflective analysis (EN)', type: 'reflection', rows: 14 },
     { key: '_proof',        type: 'proof-section' },
     { key: 'proof_url',     label: 'Preuves de participation (un lien par ligne)', type: 'multi-url' },
     { key: 'order_index',   label: 'Ordre d\'affichage',   type: 'number' },
@@ -391,7 +391,6 @@ async function openForm(type, data = null) {
     return buildField(f, val, themes);
   }).join('');
 
-  setupCharCounters();
   setupProofUpload(data?.id);
   overlay.classList.add('open');
 }
@@ -403,12 +402,12 @@ function buildField(f, val, themes) {
   if (f.type === 'row-end')    return '</div>';
   if (f.type === 'proof-section') return `
     <div class="proof-upload-section">
-      <div class="proof-section-label">📎 Preuve de participation</div>
+      <div class="proof-section-label">📎 Téléverser des preuves (photos / vidéos)</div>
       <div class="proof-upload-inner">
-        <input type="file" id="proof-file-input" accept="image/*,.pdf" class="file-input">
-        <label for="proof-file-input" class="btn-ghost file-label">Choisir un fichier (image ou PDF)</label>
+        <input type="file" id="proof-file-input" accept="image/*,video/*,.pdf" multiple class="file-input">
+        <label for="proof-file-input" class="btn-ghost file-label">Choisir fichier(s)</label>
         <span class="file-name" id="proof-file-name">Aucun fichier</span>
-        <button type="button" class="btn-primary btn-sm" id="proof-upload-btn">Téléverser</button>
+        <button type="button" class="btn-primary btn-sm" id="proof-upload-btn">Téléverser tout</button>
         <span class="save-status" id="proof-upload-status"></span>
       </div>
       <div id="proof-preview" class="proof-preview"></div>
@@ -432,19 +431,10 @@ function buildField(f, val, themes) {
     return `<div class="form-group"><label>${f.label}</label><select name="${f.key}"><option value="">— Type —</option>${opts}</select></div>`;
   }
   if (f.type === 'reflection') {
-    const isFr  = f.key === 'reflection_fr';
-    const count = String(val || '').length;
-    const cls   = count >= 1500 ? 'ok' : count >= 750 ? 'warn' : 'low';
-    const counter = isFr ? `
-        <div class="char-counter ${cls}" id="${f.key}-counter">
-          <span class="char-num">${count}</span> caractères
-          <span class="char-target">${count >= 1500 ? '✓ suffisant' : '· objectif : 1500+'}</span>
-        </div>` : '';
     return `
       <div class="form-group">
         <label>${f.label}</label>
-        <textarea name="${f.key}" rows="${f.rows || 8}" ${req} class="${isFr ? 'reflection-ta' : ''}" ${isFr ? `data-counter="${f.key}-counter"` : ''}>${escHtml(val)}</textarea>
-        ${counter}
+        <textarea name="${f.key}" rows="${f.rows || 8}" ${req}>${escHtml(val)}</textarea>
       </div>`;
   }
   if (f.type === 'multi-url') {
@@ -461,65 +451,73 @@ function buildField(f, val, themes) {
   return `<div class="form-group"><label>${f.label}</label><input type="${f.type}" name="${f.key}" value="${escHtml(String(val))}" ${req}></div>`;
 }
 
-function setupCharCounters() {
-  document.querySelectorAll('.reflection-ta').forEach(ta => {
-    const counterId = ta.dataset.counter;
-    ta.addEventListener('input', () => {
-      const count  = ta.value.length;
-      const el     = document.getElementById(counterId);
-      if (!el) return;
-      el.querySelector('.char-num').textContent = count;
-      el.querySelector('.char-target').textContent = count >= 1500 ? '✓ suffisant' : '· objectif : 1500+';
-      el.className = `char-counter ${count >= 1500 ? 'ok' : count >= 750 ? 'warn' : 'low'}`;
-    });
-  });
-}
-
 function setupProofUpload(activityId) {
   const fileInput  = document.getElementById('proof-file-input');
   const fileNameEl = document.getElementById('proof-file-name');
   const uploadBtn  = document.getElementById('proof-upload-btn');
   const statusEl   = document.getElementById('proof-upload-status');
   const previewEl  = document.getElementById('proof-preview');
-  const urlInput   = document.querySelector('input[name="proof_url"]');
+  const urlTextarea = document.querySelector('[name="proof_url"]');
 
   if (!fileInput) return;
 
   fileInput.addEventListener('change', () => {
-    const f = fileInput.files[0];
-    fileNameEl.textContent = f?.name || 'Aucun fichier';
-    if (f && f.type.startsWith('image/')) {
-      const reader = new FileReader();
-      reader.onload = e => { previewEl.innerHTML = `<img src="${e.target.result}" alt="preview">`; };
-      reader.readAsDataURL(f);
-    } else {
-      previewEl.innerHTML = '';
-    }
+    const files = Array.from(fileInput.files);
+    fileNameEl.textContent = files.length ? files.map(f => f.name).join(', ') : 'Aucun fichier';
+
+    // prévisualiser les images sélectionnées
+    previewEl.innerHTML = '';
+    files.forEach(f => {
+      if (f.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = e => {
+          const img = document.createElement('img');
+          img.src = e.target.result;
+          img.alt = f.name;
+          previewEl.appendChild(img);
+        };
+        reader.readAsDataURL(f);
+      } else if (f.type.startsWith('video/')) {
+        const p = document.createElement('p');
+        p.style.cssText = 'font-size:.8rem;color:var(--muted);margin:4px 0';
+        p.textContent = '🎬 ' + f.name;
+        previewEl.appendChild(p);
+      }
+    });
   });
 
   uploadBtn?.addEventListener('click', async () => {
-    const file = fileInput.files[0];
-    if (!file) { statusEl.textContent = 'Aucun fichier.'; return; }
-    if (!sb)   { statusEl.textContent = 'Supabase non configuré.'; return; }
+    const files = Array.from(fileInput.files);
+    if (!files.length) { statusEl.textContent = 'Aucun fichier sélectionné.'; return; }
+    if (!sb)           { statusEl.textContent = 'Supabase non configuré.'; return; }
 
     uploadBtn.disabled = true;
-    statusEl.textContent = 'Téléversement…';
+    statusEl.textContent = `Téléversement de ${files.length} fichier(s)…`;
     statusEl.className = 'save-status';
 
-    const ext  = file.name.split('.').pop();
-    const name = `proof_${activityId || Date.now()}.${ext}`;
-    const { data, error } = await sb.storage.from('proof-images').upload(name, file, { upsert: true });
+    const urls = [];
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const ext  = file.name.split('.').pop();
+      const name = `proof_${activityId || Date.now()}_${i}_${Date.now()}.${ext}`;
+      const { error } = await sb.storage.from('proof-images').upload(name, file, { upsert: true });
+      if (error) {
+        statusEl.textContent = `Erreur (fichier ${i + 1}) : ${error.message}`;
+        statusEl.className = 'save-status error';
+        uploadBtn.disabled = false;
+        return;
+      }
+      const { data: { publicUrl } } = sb.storage.from('proof-images').getPublicUrl(name);
+      urls.push(publicUrl);
+    }
 
     uploadBtn.disabled = false;
-    if (error) {
-      statusEl.textContent = 'Erreur : ' + error.message;
-      statusEl.className = 'save-status error';
-      return;
+    if (urlTextarea) {
+      const existing = urlTextarea.value.trim();
+      urlTextarea.value = existing ? existing + '\n' + urls.join('\n') : urls.join('\n');
     }
-    const { data: { publicUrl } } = sb.storage.from('proof-images').getPublicUrl(name);
-    if (urlInput) urlInput.value = publicUrl;
-    statusEl.textContent = '✓ Fichier téléversé, URL copiée dans le champ ci-dessus';
-    setTimeout(() => { statusEl.textContent = ''; }, 4000);
+    statusEl.textContent = `✓ ${urls.length} fichier(s) téléversé(s) — URL(s) ajoutée(s) ci-dessus`;
+    setTimeout(() => { statusEl.textContent = ''; }, 5000);
   });
 }
 
