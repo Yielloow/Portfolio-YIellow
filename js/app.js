@@ -228,29 +228,38 @@ function initAnimations() {
   if (!window.gsap || !window.ScrollTrigger) return;
   gsap.registerPlugin(ScrollTrigger);
 
+  // [data-animate] : CSS les met à opacity:0 pour éviter le flash avant GSAP.
+  // On utilise fromTo() avec une cible explicite opacity:1 pour que GSAP
+  // ne lise pas le CSS opacity:0 comme valeur cible (ce qui rendait tout invisible).
   document.querySelectorAll('[data-animate]').forEach(el => {
     const type = el.getAttribute('data-animate') || 'fade-up';
-    const from = {
-      opacity: 0,
-      y: type === 'fade-up'    ? 40 : 0,
-      x: type === 'fade-right' ? -50 : type === 'fade-left' ? 50 : 0,
-    };
-    gsap.from(el, {
-      ...from,
-      duration: 0.9,
-      ease: 'power3.out',
-      scrollTrigger: {
-        trigger: el,
-        start: 'top 88%',
-        toggleActions: 'play none none none',
+    gsap.fromTo(el,
+      {
+        opacity: 0,
+        y: type === 'fade-up'    ? 40 : 0,
+        x: type === 'fade-right' ? -50 : type === 'fade-left' ? 50 : 0,
+      },
+      {
+        opacity: 1,
+        y: 0,
+        x: 0,
+        duration: 0.9,
+        ease: 'power3.out',
+        scrollTrigger: {
+          trigger: el,
+          start: 'top 88%',
+          toggleActions: 'play none none none',
+        }
       }
-    });
+    );
   });
 
-  gsap.from('h2', {
-    opacity: 0, y: 28, duration: 0.8, ease: 'power3.out',
-    scrollTrigger: { trigger: 'h2', start: 'top 90%', toggleActions: 'play none none none' },
-    stagger: 0.1
+  // h2 sans data-animate (ex: "Qui suis-je ?" dans About)
+  document.querySelectorAll('h2:not([data-animate])').forEach(el => {
+    gsap.from(el, {
+      opacity: 0, y: 28, duration: 0.8, ease: 'power3.out',
+      scrollTrigger: { trigger: el, start: 'top 90%', toggleActions: 'play none none none' }
+    });
   });
 }
 
@@ -291,7 +300,7 @@ async function loadProfileData() {
     const bioVal = data[bioKey];
     if (bioVal) {
       const el = document.getElementById('about-text');
-      if (el) el.innerHTML = bioVal.split(/\n\n+/).map(p => `<p>${escHtml(p.trim())}</p>`).join('');
+      if (el) el.innerHTML = bioVal.split(/\n\n+/).map(p => `<p>${p.trim()}</p>`).join('');
     }
 
     // Project text
@@ -299,7 +308,7 @@ async function loadProfileData() {
     const projVal = data[projKey];
     if (projVal) {
       const el = document.getElementById('projet-text');
-      if (el) el.innerHTML = projVal.split(/\n\n+/).map(p => `<p>${escHtml(p.trim())}</p>`).join('');
+      if (el) el.innerHTML = projVal.split(/\n\n+/).map(p => `<p>${p.trim()}</p>`).join('');
     }
 
     // Strengths / weaknesses
@@ -342,18 +351,10 @@ function renderSkills(skills) {
   if (!container) return;
 
   const cats = [...new Set(skills.map(s => s.category))];
-  const catLabels = {
-    Languages: lang === 'fr' ? 'Langages' : 'Languages',
-    Frontend:  'Frontend',
-    Backend:   'Backend',
-    DevOps:    'DevOps',
-    Tools:     lang === 'fr' ? 'Outils' : 'Tools',
-    Embedded:  lang === 'fr' ? 'Embarqué' : 'Embedded',
-  };
 
   container.innerHTML = cats.map(cat => `
     <div class="skills-category">
-      <div class="skills-category-title">${catLabels[cat] || cat}</div>
+      <div class="skills-category-title">${cat}</div>
       ${skills.filter(s => s.category === cat).map(s => `
         <div class="skill-item">
           <div class="skill-header">
