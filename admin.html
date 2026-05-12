@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin — Portfolio FMC</title>
+  <title>Admin - Portfolio FMC</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500&family=Space+Mono&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/admin.css">
@@ -49,9 +49,13 @@
 
     <main class="admin-main">
       <div class="admin-topbar">
+        <button class="admin-burger" id="admin-burger" aria-label="Menu navigation">
+          <span></span><span></span><span></span>
+        </button>
         <h2 id="tab-title">Activités</h2>
         <a href="index.html" target="_blank" class="preview-link">Voir le portfolio ↗</a>
       </div>
+      <div class="sidebar-overlay" id="sidebar-overlay"></div>
 
       <!-- ACTIVITÉS -->
       <div id="tab-activities" class="tab-pane active">

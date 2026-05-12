@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fabian Moné Canadell — Portfolio</title>
+  <title>Fabian Moné Canadell - Portfolio</title>
   <base href="/Portfolio-YIellow/">
-  <meta name="description" content="Portfolio de Fabian Moné Canadell — Étudiant en Technologies de l'Informatique à l'EPHEC">
+  <meta name="description" content="Portfolio de Fabian Moné Canadell - Étudiant en Technologies de l'Informatique à l'EPHEC">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
@@ -109,14 +109,20 @@
   <section id="projet">
     <div class="container">
       <span class="tag-line" data-i18n="project.tag">// projet professionnel</span>
-      <h2 data-animate="fade-up" data-i18n="project.title">Mon Projet Professionnel</h2>
-      <div class="projet-grid">
-        <div class="projet-main glass" data-animate="fade-up" id="projet-text">
+      <h2 data-i18n="project.title">Mon Projet Professionnel</h2>
+      <div class="projet-layout">
+
+        <div class="projet-main glass" id="projet-text">
+          <div class="projet-main-icon">🎯</div>
           <p data-i18n="project.text">Je vise à devenir développeur spécialisé en systèmes embarqués et robotique, à l'intersection du software et du hardware. Mon objectif est d'intégrer une équipe R&amp;D travaillant sur des projets à fort impact technologique.</p>
         </div>
-        <div class="projet-side">
-          <div class="strengths-card glass" data-animate="fade-up">
-            <h3 data-i18n="project.strengths">💪 Points Forts</h3>
+
+        <div class="projet-cards">
+          <div class="strengths-card glass">
+            <div class="pcard-header">
+              <span class="pcard-icon">💪</span>
+              <h3 data-i18n="project.strengths">Points Forts</h3>
+            </div>
             <ul id="strengths-list">
               <li data-i18n="project.s1">Curiosité intellectuelle</li>
               <li data-i18n="project.s2">Esprit analytique</li>
@@ -124,14 +130,18 @@
               <li data-i18n="project.s4">Rigueur &amp; Autonomie</li>
             </ul>
           </div>
-          <div class="weaknesses-card glass" data-animate="fade-up">
-            <h3 data-i18n="project.weaknesses">🎯 Axes d'Amélioration</h3>
+          <div class="weaknesses-card glass">
+            <div class="pcard-header">
+              <span class="pcard-icon">🚀</span>
+              <h3 data-i18n="project.weaknesses">Axes d'Amélioration</h3>
+            </div>
             <ul id="weaknesses-list">
               <li data-i18n="project.w1">Prise de parole en public</li>
               <li data-i18n="project.w2">Gestion du stress</li>
             </ul>
           </div>
         </div>
+
       </div>
     </div>
   </section>

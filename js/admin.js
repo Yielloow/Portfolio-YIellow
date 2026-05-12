@@ -118,9 +118,29 @@ function switchTab(tab) {
   loadTab(tab);
 }
 
+function closeSidebar() {
+  document.getElementById('admin-burger')?.classList.remove('open');
+  document.querySelector('.sidebar')?.classList.remove('open');
+  document.getElementById('sidebar-overlay')?.classList.remove('open');
+}
+
 function bindGlobalEvents() {
+  // Mobile sidebar toggle
+  document.getElementById('admin-burger')?.addEventListener('click', () => {
+    const burger  = document.getElementById('admin-burger');
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    const isOpen  = sidebar?.classList.toggle('open');
+    burger?.classList.toggle('open', isOpen);
+    overlay?.classList.toggle('open', isOpen);
+  });
+  document.getElementById('sidebar-overlay')?.addEventListener('click', closeSidebar);
+
   document.querySelectorAll('.sn-btn').forEach(btn => {
-    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+    btn.addEventListener('click', () => {
+      switchTab(btn.dataset.tab);
+      closeSidebar(); // ferme la sidebar sur mobile après sélection
+    });
   });
 
   document.getElementById('new-activity-btn')?.addEventListener('click', () => openForm('activity'));

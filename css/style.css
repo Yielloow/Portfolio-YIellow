@@ -223,6 +223,9 @@ h2 {
   color: var(--muted);
   display: flex;
   align-items: center;
+  padding: 8px;
+  margin: -8px;
+  border-radius: 8px;
   transition: color var(--transition);
 }
 .admin-link:hover { color: var(--accent); }
@@ -467,56 +470,98 @@ section, footer {
 ══════════════════════════════════════════ */
 #projet { background: linear-gradient(180deg, transparent, rgba(124,58,237,0.04), transparent); }
 
-.projet-grid {
-  display: grid;
-  grid-template-columns: 1fr 380px;
-  gap: 32px;
-  align-items: start;
+/* ── Projet Professionnel ─────────────────── */
+.projet-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 
+/* ── Bloc texte principal ── */
 .projet-main {
-  padding: 40px;
+  padding: 40px 48px;
   font-size: 1.05rem;
   color: var(--muted);
   line-height: 1.9;
+  position: relative;
+  overflow: hidden;
+  border-top: 2px solid var(--accent) !important;
 }
-.projet-main p { margin-bottom: 1.2em; }
+.projet-main::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(0,212,255,0.04) 0%, transparent 60%);
+  pointer-events: none;
+}
+.projet-main-icon {
+  font-size: 2rem;
+  margin-bottom: 16px;
+  display: block;
+}
+.projet-main p { margin-bottom: 1.1em; }
 .projet-main p:last-child { margin-bottom: 0; }
 
-.projet-side { display: flex; flex-direction: column; gap: 20px; }
+/* ── Grille points forts / axes ── */
+.projet-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  align-items: start;
+}
 
 .strengths-card, .weaknesses-card {
-  padding: 28px 32px;
+  padding: 28px 28px 28px 32px;
 }
 .strengths-card { border-left: 3px solid var(--accent) !important; }
 .weaknesses-card { border-left: 3px solid var(--warm) !important; }
 
-.strengths-card h3, .weaknesses-card h3 {
+/* ── Card header (icon + title) ── */
+.pcard-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.pcard-icon { font-size: 1.4rem; line-height: 1; }
+.pcard-header h3 {
   font-family: var(--font-display);
   font-size: 1rem;
   font-weight: 600;
-  margin-bottom: 16px;
   color: var(--text);
+  margin: 0;
 }
 
+/* ── Listes ── */
+.strengths-card ul, .weaknesses-card ul {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
 .strengths-card li, .weaknesses-card li {
   font-size: 0.9rem;
   color: var(--muted);
-  padding: 5px 0;
-  padding-left: 14px;
+  padding: 7px 0 7px 18px;
   position: relative;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
 }
+.strengths-card li:last-child,
+.weaknesses-card li:last-child { border-bottom: none; }
 .strengths-card li::before {
-  content: '→';
+  content: '✓';
   position: absolute;
   left: 0;
   color: var(--accent);
+  font-weight: 700;
+  font-size: 0.8rem;
 }
 .weaknesses-card li::before {
-  content: '→';
+  content: '+';
   position: absolute;
   left: 0;
   color: var(--warm);
+  font-weight: 700;
+  font-size: 1rem;
 }
 
 /* ══════════════════════════════════════════
@@ -1092,7 +1137,7 @@ footer {
   .about-stats { justify-content: center; }
   .chips       { justify-content: center; }
   .about-photo-wrap { margin: 0 auto; }
-  .projet-grid { grid-template-columns: 1fr; }
+  .projet-cards { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 860px) {
@@ -1123,9 +1168,30 @@ footer {
 
 @media (max-width: 540px) {
   section { padding: 80px 0; }
+
+  /* Navbar */
+  #navbar { padding: 0 16px; }
+  .nav-logo { font-size: 0.95rem; }
+  .lang-btn { padding: 4px 9px; font-size: 0.7rem; }
+  .admin-link svg { width: 16px; height: 16px; }
+
+  /* Hero */
+  .hero-badge { font-size: 0.7rem; padding: 5px 14px; margin-bottom: 20px; }
   .hero-cta { flex-direction: column; align-items: center; }
+
+  /* About */
   .about-photo-wrap { width: 260px; height: 320px; }
-  .cv-card { padding: 36px 24px; }
-  .modal-box { padding: 32px 24px; }
   .about-stats { gap: 24px; }
+
+  /* Projet */
+  .projet-main { padding: 24px 20px; }
+  .strengths-card, .weaknesses-card { padding: 20px 20px 20px 24px; }
+
+  /* Cards */
+  .cv-card { padding: 36px 24px; }
+  .modal-box { padding: 32px 20px; max-height: 95vh; }
+
+  /* Filter bar */
+  .filter-bar { gap: 6px; }
+  .filter-btn { padding: 6px 12px; font-size: 0.75rem; }
 }
