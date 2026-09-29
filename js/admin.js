@@ -352,6 +352,7 @@ const FORM_FIELDS = {
     { key: '_proof',        type: 'proof-section' },
     { key: 'proof_url',     label: 'Preuves de participation (un lien par ligne)', type: 'multi-url' },
     { key: 'order_index',   label: 'Ordre d\'affichage',   type: 'number' },
+    { key: 'is_featured',  label: 'Mettre ce projet en avant sur le portfolio', type: 'toggle' },
   ],
   theme: [
     { key: '_row1',       type: 'row-start' },
@@ -468,6 +469,20 @@ function buildField(f, val, themes) {
   if (f.type === 'textarea') {
     return `<div class="form-group"><label>${f.label}</label><textarea name="${f.key}" rows="${f.rows || 4}" ${req}>${escHtml(val)}</textarea></div>`;
   }
+  if (f.type === 'toggle') {
+    const checked = val === true || val === 'true' ? 'checked' : '';
+    return `
+      <div class="form-group form-group-toggle">
+        <label class="toggle-row">
+          <span class="toggle-switch">
+            <input type="checkbox" name="${f.key}" value="true" ${checked}>
+            <span class="toggle-track"><span class="toggle-thumb"></span></span>
+          </span>
+          <span class="toggle-text">${f.label}</span>
+        </label>
+        <span class="field-hint">Un seul projet à la fois recommandé.</span>
+      </div>`;
+  }
   return `<div class="form-group"><label>${f.label}</label><input type="${f.type}" name="${f.key}" value="${escHtml(String(val))}" ${req}></div>`;
 }
 
@@ -547,14 +562,20 @@ async function handleFormSubmit(e) {
   const data    = Object.fromEntries(new FormData(form).entries());
   const table   = TABLE_MAP[formContext];
 
-  // coerce types — empty strings → null for non-text fields
-  if (data.hours)       data.hours       = Number(data.hours);
-  if (data.level)       data.level       = Number(data.level);
-  if (data.order_index) data.order_index = Number(data.order_index);
-  if (data.date      === '') data.date      = null;
-  if (data.proof_url === '') data.proof_url = null;
-  else if (data.proof_url) data.proof_url = data.proof_url.trim();
-  if (data.title_en    === '') data.title_en    = null;
+  // Convertit en entier ou null — évite "invalid input syntax for type integer: """
+  const toInt = v => (v === '' || v == null) ? null : Number(v);
+
+  data.hours       = toInt(data.hours);
+  data.level       = toInt(data.level);
+  data.order_index = toInt(data.order_index);
+  data.theme_id    = toInt(data.theme_id);
+
+  data.is_featured = data.is_featured === 'true';
+
+  if (data.date         === '') data.date         = null;
+  if (data.proof_url    === '') data.proof_url    = null;
+  else if (data.proof_url)      data.proof_url    = data.proof_url.trim();
+  if (data.title_en     === '') data.title_en     = null;
   if (data.reflection_en === '') data.reflection_en = null;
 
   let error;
@@ -630,6 +651,7 @@ function setupCvUpload(lang) {
    SECTION ORDERING
 ══════════════════════════════════════════ */
 const SECTION_LABELS = {
+  featured:    '⭐ Projet mis en avant',
   about:       '👤 À propos',
   projet:      '🎯 Projet professionnel',
   competences: '💡 Stack technique',
@@ -637,7 +659,7 @@ const SECTION_LABELS = {
   parcours:    '📅 Parcours',
   cv:          '📄 CV',
 };
-const DEFAULT_ORDER = ['about','projet','competences','activites','parcours','cv'];
+const DEFAULT_ORDER = ['featured','about','projet','competences','activites','parcours','cv'];
 
 let currentSectionOrder = [...DEFAULT_ORDER];
 

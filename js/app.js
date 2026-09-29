@@ -134,8 +134,8 @@ const STATIC_TIMELINE = [
     desc_fr: 'Participation à des compétitions et projets en équipe complexes.', desc_en: 'Participation in competitions and complex team projects.' },
   { year: '2025', title_fr: 'Stage professionnel', title_en: 'Professional Internship', type: 'work',
     desc_fr: 'Stage en entreprise — mise en pratique des compétences acquises.', desc_en: 'Company internship — applying acquired skills in a professional context.' },
-  { year: '2026', title_fr: 'Diplôme — À venir', title_en: 'Degree — Upcoming', type: 'future',
-    desc_fr: 'Obtention du Bachelier en Technologies de l\'Informatique.', desc_en: 'Obtaining the Bachelor in Computer Science Technologies.' },
+  { year: '2026', title_fr: 'Bachelier obtenu — EPHEC', title_en: 'Bachelor\'s Degree — EPHEC', type: 'education',
+    desc_fr: 'Diplômé en Technologies de l\'Informatique à l\'EPHEC.', desc_en: 'Graduated in Computer Science Technologies from EPHEC.' },
 ];
 
 /* ══════════════════════════════════════════
@@ -748,6 +748,79 @@ function escHtml(str) {
 }
 
 /* ══════════════════════════════════════════
+   PROJET MIS EN AVANT
+══════════════════════════════════════════ */
+async function loadFeaturedProject() {
+  const section = document.getElementById('featured');
+  if (!sb || !section) return;
+  try {
+    const { data, error } = await sb
+      .from('activities')
+      .select('*')
+      .eq('is_featured', true)
+      .limit(1)
+      .single();
+    if (error || !data) return;
+    renderFeaturedProject(data);
+    section.style.display = '';
+  } catch (_) {}
+}
+
+function renderFeaturedProject(activity) {
+  const card = document.getElementById('featured-card');
+  if (!card) return;
+
+  const title      = (lang === 'en' && activity.title_en      ? activity.title_en      : activity.title_fr)      || '';
+  const desc       = (lang === 'en' && activity.reflection_en ? activity.reflection_en : activity.reflection_fr) || '';
+  const proofLinks = (activity.proof_url || '').split('\n').map(u => u.trim()).filter(Boolean);
+
+  const images = proofLinks.filter(u =>
+    /\.(jpg|jpeg|png|gif|webp|svg|avif|bmp)$/i.test(u.split('?')[0]) || u.includes('/proof-images/')
+  );
+  const videos = proofLinks.filter(u =>
+    /youtube\.com|youtu\.be|vimeo\.com|\.(mp4|webm|ogg|mov)$/i.test(u)
+  );
+  const linkItems = proofLinks.filter(u => !images.includes(u) && !videos.includes(u));
+
+  const mediaHTML = (images.length || videos.length) ? `
+    <div class="featured-media">
+      ${videos.map(u => renderProofItem(u, 0, 1)).join('')}
+      ${images.length ? `<div class="featured-img-grid">
+        ${images.map((u, i) => `
+          <a href="${escHtml(u)}" target="_blank" rel="noopener" class="proof-img-link">
+            <img src="${escHtml(u)}" alt="Screenshot ${i + 1}" class="proof-image" loading="lazy">
+          </a>`).join('')}
+      </div>` : ''}
+    </div>` : '';
+
+  const linksHTML = linkItems.length ? `
+    <div class="featured-links">
+      ${linkItems.map(url => {
+        const meta = getProofMeta(url);
+        return `<a href="${escHtml(url)}" target="_blank" rel="noopener"
+                   class="proof-link-btn featured-link-btn" style="--link-color:${meta.color}">
+          <span class="plb-icon">${meta.icon}</span>
+          <span class="plb-label">${meta.label}</span>
+          <span class="plb-arrow">↗</span>
+        </a>`;
+      }).join('')}
+    </div>` : '';
+
+  card.innerHTML = `
+    <div class="featured-info">
+      <div class="featured-meta">
+        <span class="type-badge ${escHtml(activity.type || '')}">${typeLabel(activity.type)}</span>
+        ${activity.hours ? `<span class="featured-hours">${activity.hours}h</span>` : ''}
+      </div>
+      <h3 class="featured-title">${escHtml(title)}</h3>
+      <div class="featured-desc">${escHtml(desc)}</div>
+      ${linksHTML}
+    </div>
+    ${mediaHTML}
+  `;
+}
+
+/* ══════════════════════════════════════════
    INIT
 ══════════════════════════════════════════ */
 async function init() {
@@ -757,6 +830,7 @@ async function init() {
   initAnimations();
   startTyping();
   await loadProfileData();
+  await loadFeaturedProject();
   await loadSkillsData();
   await loadAndRenderActivities();
   await loadAndRenderTimeline();

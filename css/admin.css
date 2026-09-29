@@ -440,6 +440,47 @@ input, textarea, select { font-family: inherit; }
 .char-counter.ok   { color: #22c55e; }
 .char-num { font-weight: 700; font-size: 0.88rem; }
 
+/* ── Toggle switch ── */
+.form-group-toggle { margin-bottom: 20px; }
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+.toggle-switch { position: relative; flex-shrink: 0; }
+.toggle-switch input { position: absolute; opacity: 0; width: 0; height: 0; }
+.toggle-track {
+  display: block;
+  width: 44px; height: 24px;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  transition: background var(--tr), border-color var(--tr);
+  position: relative;
+}
+.toggle-thumb {
+  position: absolute;
+  top: 3px; left: 3px;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: var(--muted);
+  transition: transform var(--tr), background var(--tr);
+}
+.toggle-switch input:checked + .toggle-track {
+  background: rgba(0,212,255,0.2);
+  border-color: var(--accent);
+}
+.toggle-switch input:checked + .toggle-track .toggle-thumb {
+  transform: translateX(20px);
+  background: var(--accent);
+}
+.toggle-text {
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text);
+}
+
 /* ── Proof upload section ── */
 .proof-upload-section {
   border: 1px dashed var(--border);
