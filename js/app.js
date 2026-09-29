@@ -782,15 +782,25 @@ function renderFeaturedProject(activity) {
   );
   const linkItems = proofLinks.filter(u => !images.includes(u) && !videos.includes(u));
 
+  const carouselHTML = images.length ? `
+    <div class="featured-carousel" id="feat-carousel">
+      <div class="carousel-track" id="feat-track">
+        ${images.map((u, i) => `<img src="${escHtml(u)}" alt="Screenshot ${i + 1}" class="proof-image" loading="lazy">`).join('')}
+      </div>
+      ${images.length > 1 ? `
+        <button class="carousel-btn carousel-prev" id="feat-prev">‹</button>
+        <button class="carousel-btn carousel-next" id="feat-next">›</button>
+        <div class="carousel-dots" id="feat-dots">
+          ${images.map((_, i) => `<span class="carousel-dot${i === 0 ? ' active' : ''}" data-i="${i}"></span>`).join('')}
+        </div>
+        <span class="carousel-count" id="feat-count">1 / ${images.length}</span>
+      ` : ''}
+    </div>` : '';
+
   const mediaHTML = (images.length || videos.length) ? `
     <div class="featured-media">
       ${videos.map(u => renderProofItem(u, 0, 1)).join('')}
-      ${images.length ? `<div class="featured-img-grid">
-        ${images.map((u, i) => `
-          <a href="${escHtml(u)}" target="_blank" rel="noopener" class="proof-img-link">
-            <img src="${escHtml(u)}" alt="Screenshot ${i + 1}" class="proof-image" loading="lazy">
-          </a>`).join('')}
-      </div>` : ''}
+      ${carouselHTML}
     </div>` : '';
 
   const linksHTML = linkItems.length ? `
@@ -818,6 +828,41 @@ function renderFeaturedProject(activity) {
     </div>
     ${mediaHTML}
   `;
+
+  if (images.length > 1) initCarousel(images.length);
+}
+
+function initCarousel(total) {
+  const track  = document.getElementById('feat-track');
+  const prev   = document.getElementById('feat-prev');
+  const next   = document.getElementById('feat-next');
+  const dots   = document.querySelectorAll('#feat-dots .carousel-dot');
+  const count  = document.getElementById('feat-count');
+  let current  = 0;
+
+  function goTo(idx) {
+    current = (idx + total) % total;
+    track.style.transform = `translateX(-${current * 100}%)`;
+    dots.forEach((d, i) => d.classList.toggle('active', i === current));
+    if (count) count.textContent = `${current + 1} / ${total}`;
+    if (prev) prev.classList.toggle('hidden', current === 0);
+    if (next) next.classList.toggle('hidden', current === total - 1);
+  }
+
+  prev?.addEventListener('click', () => goTo(current - 1));
+  next?.addEventListener('click', () => goTo(current + 1));
+  dots.forEach(d => d.addEventListener('click', () => goTo(+d.dataset.i)));
+
+  // swipe tactile
+  const carousel = document.getElementById('feat-carousel');
+  let startX = 0;
+  carousel.addEventListener('touchstart', e => { startX = e.touches[0].clientX; }, { passive: true });
+  carousel.addEventListener('touchend',   e => {
+    const dx = e.changedTouches[0].clientX - startX;
+    if (Math.abs(dx) > 40) goTo(current + (dx < 0 ? 1 : -1));
+  }, { passive: true });
+
+  goTo(0);
 }
 
 /* ══════════════════════════════════════════
