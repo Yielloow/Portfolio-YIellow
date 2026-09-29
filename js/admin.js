@@ -565,10 +565,10 @@ async function handleFormSubmit(e) {
   // Convertit en entier ou null — évite "invalid input syntax for type integer: """
   const toInt = v => (v === '' || v == null) ? null : Number(v);
 
-  data.hours       = toInt(data.hours);
-  data.level       = toInt(data.level);
-  data.order_index = toInt(data.order_index);
-  data.theme_id    = toInt(data.theme_id);
+  if ('hours'       in data) data.hours       = toInt(data.hours);
+  if ('level'       in data) data.level       = toInt(data.level);
+  if ('order_index' in data) data.order_index = toInt(data.order_index);
+  if ('theme_id'    in data) data.theme_id    = toInt(data.theme_id);
 
   data.is_featured = data.is_featured === 'true';
 
