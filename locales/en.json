@@ -53,7 +53,7 @@
   "cv.fr":    "CV Français",
   "cv.en":    "CV English",
 
-  "footer.made": "Built with Three.js, GSAP & passion",
+  "footer.made": "Built with GSAP, Canvas & passion",
 
   "modal.hours": "hours",
   "modal.proof": "Proof of participation:",
