@@ -41,11 +41,11 @@
      phase : initial time offset
   ── */
   const LAYERS = [
-    { hex: '#7c3aed', op: 0.22, speed: 0.00055, amp: 0.13, phase: 0.0,  yBase: 0.50 },
-    { hex: '#00d4ff', op: 0.18, speed: 0.00085, amp: 0.10, phase: 2.1,  yBase: 0.40 },
-    { hex: '#a855f7', op: 0.14, speed: 0.00042, amp: 0.15, phase: 4.2,  yBase: 0.63 },
-    { hex: '#06b6d4', op: 0.12, speed: 0.00110, amp: 0.08, phase: 1.0,  yBase: 0.33 },
-    { hex: '#8b5cf6', op: 0.10, speed: 0.00070, amp: 0.17, phase: 3.5,  yBase: 0.72 },
+    { hex: '#7c3aed', op: 0.22, speed: 0.00018, amp: 0.13, phase: 0.0,  yBase: 0.50 },
+    { hex: '#00d4ff', op: 0.18, speed: 0.00028, amp: 0.10, phase: 2.1,  yBase: 0.40 },
+    { hex: '#a855f7', op: 0.14, speed: 0.00014, amp: 0.15, phase: 4.2,  yBase: 0.63 },
+    { hex: '#06b6d4', op: 0.12, speed: 0.00036, amp: 0.08, phase: 1.0,  yBase: 0.33 },
+    { hex: '#8b5cf6', op: 0.10, speed: 0.00022, amp: 0.17, phase: 3.5,  yBase: 0.72 },
   ];
 
   function hexRgb(h) {
