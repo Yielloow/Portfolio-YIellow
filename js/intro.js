@@ -95,7 +95,7 @@
 
     if (phase === 'glitch') {
       /* révéler progressivement */
-      if (frame % 4 === 0) {
+      if (frame % 9 === 0) {
         const hidden = revealed.map((r, i) => (!r ? i : -1)).filter(i => i >= 0);
         if (hidden.length) {
           const pick = hidden[Math.floor(Math.random() * hidden.length)];
@@ -103,12 +103,12 @@
         }
       }
       /* passer en pause quand tout est révélé et min 40 frames */
-      if (frame > 40 && revealed.every(Boolean)) {
+      if (frame > 80 && revealed.every(Boolean)) {
         phase = 'pause';
         frame = 0;
       }
     } else if (phase === 'pause') {
-      if (frame > 70) {
+      if (frame > 105) {
         phase = 'wipe';
         frame = 0;
         overlay.classList.add('wipe-out');
