@@ -12,6 +12,17 @@ const sb = window.supabase
   ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY)
   : null;
 
+/* mapping section id → clé i18n nav */
+const NAV_SECTIONS = {
+  featured:    { fr: 'En avant',    en: 'Featured',    key: 'nav.featured'    },
+  about:       { fr: 'À propos',    en: 'About',       key: 'nav.about'       },
+  projet:      { fr: 'Projet',      en: 'Project',     key: 'nav.project'     },
+  competences: { fr: 'Compétences', en: 'Skills',      key: 'nav.skills'      },
+  activites:   { fr: 'Activités',   en: 'Activities',  key: 'nav.activities'  },
+  parcours:    { fr: 'Parcours',    en: 'Timeline',    key: 'nav.timeline'    },
+  cv:          { fr: 'CV',          en: 'Resume',      key: 'nav.cv'          },
+};
+
 /* ══════════════════════════════════════════
    STATIC FALLBACK DATA
    (used when Supabase is not configured)
@@ -293,7 +304,13 @@ async function loadProfileData() {
     }
 
     // Section order
-    if (data.section_order?.length) applySectionOrder(data.section_order);
+    if (data.section_order?.length) {
+      applySectionOrder(data.section_order);
+    } else {
+      // pas d'ordre custom → reconstruire le nav depuis l'ordre HTML actuel
+      const defaultOrder = [...document.querySelectorAll('#sections-wrapper > section[id]')].map(s => s.id);
+      rebuildNav(defaultOrder);
+    }
 
     // About text
     const bioKey = lang === 'en' && data.bio_en ? 'bio_en' : 'bio_fr';
@@ -330,8 +347,34 @@ function applySectionOrder(order) {
     const section = document.getElementById(id);
     if (section) wrapper.appendChild(section);
   });
-  // Recalculer les positions ScrollTrigger après réorganisation du DOM
+  rebuildNav(order);
   if (window.ScrollTrigger) ScrollTrigger.refresh();
+}
+
+function rebuildNav(order) {
+  const navLinks = document.getElementById('nav-links');
+  if (!navLinks) return;
+  const currentLang = lang || 'fr';
+  navLinks.innerHTML = order
+    .filter(id => {
+      if (!(id in NAV_SECTIONS)) return false;
+      const sec = document.getElementById(id);
+      // exclure les sections invisibles (ex: featured masqué)
+      return sec && sec.style.display !== 'none';
+    })
+    .map(id => {
+      const info = NAV_SECTIONS[id];
+      const label = currentLang === 'en' ? info.en : info.fr;
+      return `<li><a href="#${id}" data-i18n="${info.key}">${label}</a></li>`;
+    })
+    .join('');
+
+  // relier les nouveaux liens au burger toggle
+  navLinks.querySelectorAll('a').forEach(a => a.addEventListener('click', () => {
+    document.getElementById('burger')?.classList.remove('open');
+    navLinks.classList.remove('open');
+    document.getElementById('burger')?.setAttribute('aria-expanded', 'false');
+  }));
 }
 
 /* ══════════════════════════════════════════
@@ -707,20 +750,21 @@ function renderTimeline(items) {
    NAVIGATION — scroll spy, burger, shrink
 ══════════════════════════════════════════ */
 function initNav() {
-  const navbar  = document.getElementById('navbar');
-  const burger  = document.getElementById('burger');
+  const navbar   = document.getElementById('navbar');
+  const burger   = document.getElementById('burger');
   const navLinks = document.getElementById('nav-links');
-  const links   = document.querySelectorAll('.nav-links a');
-  const sections = document.querySelectorAll('section[id]');
 
+  // re-query à chaque scroll pour supporter les liens générés dynamiquement
   window.addEventListener('scroll', () => {
     navbar.classList.toggle('scrolled', window.scrollY > 60);
-
+    const sections = document.querySelectorAll('#sections-wrapper section[id]');
     let current = '';
     sections.forEach(s => {
       if (window.scrollY >= s.offsetTop - 120) current = s.id;
     });
-    links.forEach(a => a.classList.toggle('active', a.getAttribute('href') === `#${current}`));
+    document.querySelectorAll('.nav-links a').forEach(a =>
+      a.classList.toggle('active', a.getAttribute('href') === `#${current}`)
+    );
   }, { passive: true });
 
   burger.addEventListener('click', () => {
@@ -728,12 +772,6 @@ function initNav() {
     navLinks.classList.toggle('open', open);
     burger.setAttribute('aria-expanded', String(open));
   });
-
-  links.forEach(a => a.addEventListener('click', () => {
-    burger.classList.remove('open');
-    navLinks.classList.remove('open');
-    burger.setAttribute('aria-expanded', 'false');
-  }));
 }
 
 /* ══════════════════════════════════════════
@@ -763,6 +801,9 @@ async function loadFeaturedProject() {
     if (error || !data) return;
     renderFeaturedProject(data);
     section.style.display = '';
+    // mettre à jour le nav pour inclure "featured" maintenant qu'il est visible
+    const order = [...document.querySelectorAll('#sections-wrapper > section[id]')].map(s => s.id);
+    rebuildNav(order);
   } catch (_) {}
 }
 
