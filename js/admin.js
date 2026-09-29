@@ -668,7 +668,12 @@ async function loadSectionOrder() {
   if (!container) return;
   try {
     const { data } = await sb.from('profile').select('section_order').single();
-    if (data?.section_order?.length) currentSectionOrder = data.section_order;
+    if (data?.section_order?.length) {
+      const saved = data.section_order;
+      // ajouter toute nouvelle section manquante à la fin
+      const missing = DEFAULT_ORDER.filter(id => !saved.includes(id));
+      currentSectionOrder = [...saved, ...missing];
+    }
   } catch (_) {}
   renderSectionOrder(container);
 }
