@@ -271,7 +271,7 @@ async function loadTimeline() {
   const list = document.getElementById('timeline-list');
   list.innerHTML = '<p style="color:var(--muted);font-size:.88rem">Chargement…</p>';
 
-  const { data: items } = await sb.from('timeline_items').select('*').order('year');
+  const { data: items } = await sb.from('timeline_items').select('*').order('order_index').order('year');
   if (!items?.length) {
     list.innerHTML = '<p style="color:var(--muted);font-size:.88rem">Aucune étape.</p>';
     return;
@@ -372,12 +372,17 @@ const FORM_FIELDS = {
     { key: 'order_index', label: 'Ordre',    type: 'number' },
   ],
   timeline: [
+    { key: '_row1',       type: 'row-start' },
     { key: 'year',        label: 'Année',      type: 'text',     required: true },
+    { key: 'type',        label: 'Type (education/work/project/future)', type: 'text' },
+    { key: '_row1end',    type: 'row-end' },
+    { key: '_row2',       type: 'row-start' },
     { key: 'title_fr',    label: 'Titre (FR)', type: 'text',     required: true },
     { key: 'title_en',    label: 'Title (EN)', type: 'text' },
+    { key: '_row2end',    type: 'row-end' },
     { key: 'desc_fr',     label: 'Description (FR)', type: 'textarea', rows: 3 },
     { key: 'desc_en',     label: 'Description (EN)', type: 'textarea', rows: 3 },
-    { key: 'type',        label: 'Type (education/work/project/future)', type: 'text' },
+    { key: 'order_index', label: 'Ordre d\'affichage', type: 'number' },
   ],
 };
 
@@ -570,7 +575,7 @@ async function handleFormSubmit(e) {
   if ('order_index' in data) data.order_index = toInt(data.order_index);
   if ('theme_id'    in data) data.theme_id    = toInt(data.theme_id);
 
-  data.is_featured = data.is_featured === 'true';
+  if ('is_featured' in data) data.is_featured = data.is_featured === 'true';
 
   if (data.date         === '') data.date         = null;
   if (data.proof_url    === '') data.proof_url    = null;

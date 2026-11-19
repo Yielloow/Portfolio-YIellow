@@ -189,6 +189,7 @@ document.getElementById('lang-toggle').addEventListener('click', async () => {
   await loadSkillsData();
   await loadAndRenderActivities();
   await loadAndRenderTimeline();
+  await loadProfileData();
   restartTyping();
 });
 
@@ -705,7 +706,7 @@ async function loadAndRenderTimeline() {
   let items = STATIC_TIMELINE;
   if (sb) {
     try {
-      const { data, error } = await sb.from('timeline_items').select('*').order('year');
+      const { data, error } = await sb.from('timeline_items').select('*').order('order_index').order('year');
       if (error) console.error('[Supabase] timeline:', error.message);
       if (!error && data?.length) items = data;
     } catch (err) { console.error('[Supabase] loadTimeline exception:', err); }
